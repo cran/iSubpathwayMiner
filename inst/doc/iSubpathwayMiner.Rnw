@@ -1,0 +1,2182 @@
+%
+% NOTE -- ONLY EDIT iSubpathwayMiner.Rnw!!!
+% iSubpathwayMiner.tex file will get overwritten.
+%
+%\VignetteIndexEntry{iSubpathwayMiner Overview}
+%\VignetteKeywords{pathway}
+%\VignettePackage{iSubpathwayMiner}
+%\VignetteDepends{igraph,fdrtool,XML}
+
+\documentclass[10pt]{article}
+
+\usepackage{hyperref}
+\usepackage[pdftex]{graphicx}
+\SweaveOpts{keep.source=TRUE,eps=FALSE,pdf=TRUE,prefix=FALSE} 
+\author{Chunquan Li}
+
+\textwidth=6.2in
+\textheight=8.5in
+%\parskip=.3cm
+\oddsidemargin=.1in
+\evensidemargin=.1in
+\headheight=-.3in
+
+\newcommand{\xiaowuhao}{\fontsize{9pt}{\baselineskip}\selectfont}
+\newcommand{\liuhao}{\fontsize{7.875pt}{\baselineskip}\selectfont}
+\newcommand{\qihao}{\fontsize{5.25pt}{\baselineskip}\selectfont}
+
+\newcommand\Rpackage[1]{{\textsf{#1}\index{#1 (package)}}}
+\newcommand\RpackageNoindex[1]{{\textsf{#1}}}
+\newcommand\Rclass[1]{{\textit{#1}\index{#1 (class)}}}
+\newcommand\Rfunction[1]{{{\small\texttt{#1}}\index{#1 (function)}}}
+\newcommand\Rmethod[1]{{\small\texttt{#1}}}
+\newcommand\Rcommand[1]{{{\small\texttt{#1}}\index{#1 (function)}}}
+\newcommand\Rfunarg[1]{{\small\texttt{#1}}}
+\newcommand\Robject[1]{{\small\texttt{#1}}}
+\bibliographystyle{plainnat}
+
+\begin{document}
+\setkeys{Gin}{width=1.0\textwidth}
+\title{How To Use iSubpathwayMiner}
+\maketitle
+\tableofcontents
+
+\section{Overview}
+This vignette demonstrates how to easily use the \Rpackage{iSubpathwayMiner} package. The package can implement the graph-based reconstruction, analyses, and visualization of the KEGG pathways. (1) Our system provides many strategies of converting pathways to graph models (see the section \ref{GraphSection}). Ten functions related to conversion from pathways to graphs are developed. Furthermore, the combinations of these functions can get many combined conversion strategies of pathway graphs (> 20). (2) The iSubpathwayMiner can support the annotation and identification of pathways based on gene sets (see the section \ref{annEntireGene} and \ref{annSub2Gene}), compound sets (see the section \ref{annEntireCompound} and \ref{annSub2Compound}), and even the combined sets of genes and compounds (see the section \ref{annEntireCompoundGene} and \ref{annSub2CompoundGene}). The entire pathway and subpathway identification methods are available for these sets (see the section \ref{annEntire} and \ref{annSub}). (3) The system also supports topology-based pathway analysis of these sets (see the section \ref{TopoSection}), including gene sets (see the section \ref{TopoGeneSection}), compound sets (see the section \ref{TopoCompoundSection}), and the combined sets of genes and compounds (see the section \ref{TopoGeneCompoundSection}). The current available topological properties contain degree, local clustering coefficient, closeness and betweenness. (4) We develop KEGG layout style of pathway graphs in R to simulate the layout of the pathway picture in KEGG website (see the section \ref{visualizeSection}). In addition, our system has also provided many types of automatic layout styles. Pathway graphs can also be exported to the GML format supported by Cytoscape \cite{Shannon2003}. (5) The iSubpathwayMiner is developed based on the previous SubpathwayMiner. It is thus able to provide some good functions supported by SubpathwayMiner. For example, through the methods provided in data management section \ref{managementSection}, iSubpathwayMiner can provide the most up-to-date pathway analysis results for users. Multiple species (about 139 Eukaryotes, 1141 Bacteria and 93 Archaea) and different gene identifiers (KEGG compound, Entrez Gene IDs, gene official symbol, NCBI-gi IDs, UniProt IDs, PDB IDs, etc.) can also be supported by the system. The following sections will detailedly introduce the iSubpathwayMiner system. We firstly give several examples as follows:
+
+The following commands can convert two metabolic pathways to graphs.
+
+<<echo=FALSE>>=
+library(iSubpathwayMiner)
+@ 
+
+<<>>=
+#get path of the KGML files
+path<-paste(system.file(package="iSubpathwayMiner"),
+"/localdata/kgml/metabolic/ec/",sep="")
+#convert pathways to a list in R
+pList<-getPathway(path,c("ec00010.xml","ec00020.xml"))
+#convert metabolic pathways to graphs
+gmList<-getMetabolicGraph(pList)
+@
+
+The following commands visualize a pathway graph. The result is shown in Figure \ref{getMetabolicGraph1}.
+<<overview1,fig=TRUE,include=FALSE,prefix=FALSE>>=
+#visualize
+plotGraph(gmList[[1]])
+@
+
+The following command gets the type of organism and identifier in the current environment variable.
+<<>>=
+getOrgAndIdType()
+@ 
+
+The following commands annotate gene sets to the above two metabolic pathways and evaluate the enrichment significance of pathways.
+<<>>=
+#To do this, let us generate an example of gene sets:
+geneList<-getExample(geneNumber=1000,compoundNumber=0)
+#see a part of the set. 
+#organism:human (hsa)
+#identifier type:Entrez Gene IDs (ncbi-geneid)
+geneList[1:5]
+#annotate the sets to pathways 
+#evaluate the enrichment significance of pathways
+ann<-identifyGraph(geneList,gmList)
+#print the results to screen
+printGraph(ann)
+@
+
+\section{The methods of graph-based reconstruction of pathways}\label{GraphSection}
+
+The section introduces many strategies for converting pathways to different types of graphs. We firstly need to use the function \Rfunction{getPathway} to convert KGML files (KEGG Markup Language, \url{http://www.genome.jp/kegg/docs/xml/}) of KEGG pathways to a list variable in R, which is used to store pathway data in the \Rpackage{iSubpathwayMiner} system (see the section \ref{getPathwaysection}). We can then use the function \Rfunction{getMetabolicGraph} or \Rfunction{getNonMetabolicGraph} to convert metabolic pathways or non-metabolic pathways to graphs (Figure \ref{getMetabolicGraph1} and \ref{getNonMetabolicGraph1}). The function \Rfunction{getMetabolicGraph} constructs graphs based on reaction information of KGML files of pathways (see the section \ref{getMGraphsection}). The function \Rfunction{getNonMetabolicGraph} constructs graphs based on relation information (see the section \ref{getNMGraphsection}). After using the function \Rfunction{getMetabolicGraph} or \Rfunction{getNonMetabolicGraph} to convert pathways to graphs, users can change these pathway graphs to other derivative graphs. We develop the function \Rfunction{getUGraph}, \Rfunction{mapNode}, \Rfunction{filterNode}, \Rfunction{simplifyGraph}, \Rfunction{mergeNode}, \Rfunction{getSimpleGraph}, and \Rfunction{expandNode}  (see the section \ref{getDerivativesGraphsection}). Through these functions, many graph-based reconstruction strategies of pathways can be done such as constructing undirected graphs (Figure \ref{getUGraph}), organism-specific and idType-specific graphs (Figure \ref{mapNode}), the metabolic graphs with enzymes (compounds) as nodes and compounds (enzymes) as edges (Figure \ref{simplifyGraphGene} and \ref{simplifyGraphCompound}), etc. Furthermore, the combination of these functions can also get more useful pathway graphs (see the section \ref{applicationexample}). For example, we can construct the directed/undirected pathway graphs of enzyme-compound (see the section \ref{example1}), enzyme-enzyme (see the section \ref{example2}), KO-KO (see the section \ref{example2}), compound-compound (see the section \ref{example3}), organism-specific gene-gene (see the section \ref{example4}), etc. Most of these conversions represent current major applications \cite{Smart2008, Schreiber2002, Klukas2007, Kanehisa2006, Goffard2007, Koyuturk2004, Hung2010, Xia2010, Jeong2000, Antonov2008, Guimera2005, Draghici2007, Li2009, Ogata2000, Hung2010, Barabasi2004}. The following sections will detailedly introduce the usage of the functions relative to graph-based conversion of pathways.
+
+\subsection{Convert KGML files of KEGG pathways to a list in R}\label{getPathwaysection}
+
+The KEGG Markup Language (KGML) is an exchange format of KEGG pathway data. In a KGML file (.xml), the pathway element is a root element. The entry element stores information about nodes of the pathway, including the attribute information (id, name, type, link, and reaction), the "graphics" subelement, the "component" subelement. The relation element stores information about relationship between gene products (or between gene products and compounds). It includes the attribute information (entry1, entry2, and type), and the "subtype" subelement that specifies more detailed information about the interaction. The reaction element stores chemical reaction between a substrate and a product. It includes the attribute information (id, name, and type), the "substrate" subelement, and the "product" subelement. Detailed information is provided in \url{http://www.genome.jp/kegg/xml/docs/}.
+
+In KEGG, there are two fundamental controlled vocabularies for matching genes to pathways. Enzyme commission (EC) numbers are traditionally used as an effective vocabulary for annotating genes to metabolic pathways. With the rapid development of KEGG, more and more non-metabolic pathways including genetic information processing, environmental information processing and cellular processes have been added to KEGG PATHWAY database. KEGG Orthology (KO) identifiers, which overcome limitations of enzyme nomenclature and integrate the pathway and genome information, have become a better controlled vocabulary for annotating genes to both metabolic and regulatory pathways \cite{Kanehisa2006}. Therefore, KEGG has provided the KGML files of reference metabolic pathways linked to EC identifiers, reference metabolic pathways linked to KO identifiers, and reference non-metabolic pathways linked to KO identifiers. They can be obtained from KEGG ftp site (\url{ftp://ftp.genome.jp/pub/kegg/xml/kgml/metabolic/ec}, \url{ftp://ftp.genome.jp/pub/kegg/xml/kgml/metabolic/ko}, and \url{ftp://ftp.genome.jp/pub/kegg/xml/kgml/non-metabolic/ko}). In addition, the KGML file of organism-specific pathways linked to genes can also be obtained from KEGG ftp site.
+
+The function \Rfunction{getPathway} can convert the above KGML files to a list variable in R, which is used as pathway data in our system. The conversion only changes data structure in order to efficiently operate data in R environment. After conversion, most of original information about pathways are not ignored although data structure changed. The list that stores pathway information will be used as the input of other functions such as \Rfunction{getMetabolicGraph} and \Rfunction{getNonMetabolicGraph}. The following commands can convert KGML files of metabolic pathways to a list in R. 
+
+<<>>= 
+#get path of the KGML files
+path<-paste(system.file(package="iSubpathwayMiner"),
+"/localdata/kgml/metabolic/ec/",sep="")
+#convert pathways to a list in R
+p<-getPathway(path,c("ec00010.xml","ec00020.xml"))
+#see type of the variable p
+typeof(p)
+#see length of the variable p
+length(p)
+@
+The list type of variable p stores information of two pathways. We can display information stored in the variable. The following commands only display a part of the list structure of a pathway.
+<<>>=
+#display information stored in the variable p
+p[[1]][1]
+#the first entry information of the pathway
+p[[1]][[2]][1]
+#the first relation information of the pathway
+p[[1]][[3]][1]
+#the first reaction information of the pathway
+p[[1]][[4]][1]
+@
+
+\subsection{Convert metabolic pathways to graphs}\label{getMGraphsection}
+
+\subsubsection{The method to convert metabolic pathways to graphs}
+
+The function \Rfunction{getMetabolicGraph} can convert metabolic pathways to graphs. A result graph mainly contains three types of nodes: compounds, gene products (enzymes, KOs, or genes encoding them), and maps that represent pathways linked with the current pathway. Edges are mainly constructed from reactions. Specially, if a compound participates in a reaction as a substrate or product, a directed edge connects the compound node to the reaction node (enzymes, KOs, or genes). That is, substrates of a reaction are connected to the reaction node (enzymes, KOs, or genes) and the reaction node is connected to products. For substrates, they are directed toward the reaction node. For products, the reaction node is directed toward them. Reversible reactions have twice edges of irreversible reactions. The conversion strategy of pathway graphs has the advantage that graph algorithms and standard graph drawing techniques can be used. More importantly, almost all information can be efficiently stored in the kind of graph model. The similar strategy is also adopt by many study groups \cite{Smart2008, Klukas2007, Goffard2007, Goffard2007, Koyuturk2004}.
+
+In addition, a compound and a linked map will be connected by an edge if they have relationships get from relation element of the KGML file. Other information such as node attribute, pathway attribute (e.g., pathway name), etc. are converted to attribute of graph. 
+
+The following commands can convert metabolic pathways to graphs.
+
+<<>>=
+#get path of the KGML files
+path<-paste(system.file(package="iSubpathwayMiner"),
+"/localdata/kgml/metabolic/ec/",sep="")
+#convert pathways to a list in R
+p<-getPathway(path,c("ec00010.xml","ec00020.xml"))
+#convert metabolic pathways to graphs
+gm<-getMetabolicGraph(p)
+@ 
+
+The following commands can visualize the graph of the Glycolysis / Gluconeogenesis pathway. Figure \ref{getMetabolicGraph1} shows the result graph. In the figure, the blue rectangle nodes represent enzymes. The circle nodes represent compounds. The white rectangle nodes represent maps.
+
+<<getMetabolicGraph1,fig=TRUE, include=FALSE, prefix=FALSE>>=
+#name of graph gm[[1]]
+gm[[1]]$title
+#visualize
+plotGraph(gm[[1]])
+@
+
+\begin{figure}[htbp]
+\begin{center}  
+\includegraphics[width=1.0\textwidth]{getMetabolicGraph1}
+\caption{The Glycolysis / Gluconeogenesis pathway graph.}\label{getMetabolicGraph1}
+\end{center}
+\end{figure}
+
+For a pathway graph, the function \Rfunction{summary} can print the number of nodes and edges, names of node and edge attributes, and whether the graph is directed as follows:
+
+<<>>=
+summary(gm[[1]])
+@
+
+The function \Rfunction{print} can display the information similar to the function \Rfunction{summary}. In addition, the function also displays edges, graph attributes, node attributes, and edge attributes. The following command prints all information of a pathway graph:
+
+<<results=hide>>=
+print(gm[["00010"]],v=TRUE,e=TRUE,g=TRUE)
+@
+Because the pathway graph is usually too large, here we only display its subgraph with five nodes in order to save page space.
+<<>>=
+#display a subgraph with 5 nodes.
+sgm<-subgraph(gm[[1]],V(gm[[1]])[1:5])
+print(sgm,g=TRUE,v=TRUE,e=TRUE)
+@
+
+\subsubsection{Some simple examples of operating pathway graphs}
+
+Since pathways can be converted to graphs, many analyses based on graph model are available by using the functions provided in the \Rpackage{igraph} package. For example, we can get subgraph, degree, shortest path, etc. Detailed information will be introduced in the section \ref{Methods}. Here, we only give some examples of operating graphs, which are very important for effectively interpreting and operating pathway graphs.
+
+We can get the name and number of the pathway, as follows:
+<<>>=
+gm[[1]]$title
+gm[[1]]$number
+@
+We can get the attribute value of a node. In all attributes, the "names" attribute is the most important. It makes us able to identify the cellular components the node includes. Its values are usually the identifiers of compound, enzyme, gene, or KO, etc. The following commands can get "names" attribute of the second node:
+<<>>=
+V(gm[[1]])[2]$names
+@
+The result shows that the second node is the enzyme identifier. We can also use another method to get "names" attribute of the node
+<<>>=
+get.vertex.attribute(gm[[1]],"names",2)
+@
+
+We can get other attributes. For example, the following command gets the "type" attribute of the second node:
+<<>>=
+V(gm[[1]])[2]$type
+@
+The result shows that the second node is the enzyme.
+
+An important application is to identify some nodes that meet the certain conditions. For example, one is likely to want to find the enzyme "ec:4.1.2.13" and "ec:1.2.1.59" in pathway graph "00010", and then calculate the shortest path between them in the graph. One may also want to identify the enzyme "ec:4.1.2.3", and then calculate its betweenness, which represents the importance of the node.  
+
+In order to do these, one firstly needs to get indexes of interesting nodes. Node indexes are used as input of most of functions in \Rpackage{igraph} package. We then use functions in the \Rpackage{igraph} package (e.g., get.shortest.paths, betweenness, etc.) to get the analysis results. The following commands get indexes of nodes with "names"="ec:4.1.2.13" and "ec:1.2.1.59" in graph "00010", then calculate shortest path of them.
+<<>>=
+#get indexes of nodes
+index1<-V(gm[[1]])[V(gm[[1]])$names=="ec:4.1.2.13"]
+index2<-V(gm[[1]])[V(gm[[1]])$names=="ec:1.2.1.59"]
+#get shortest path
+shortest.path<-get.shortest.paths(gm[[1]],index1,index2)
+#display shortest path
+shortest.path
+#convert indexes to names
+V(gm[[1]])[shortest.path[[1]]]$names
+@
+Calculate betweenness of the enzyme "ec:4.1.2.3".
+<<>>=
+index1<-V(gm[[1]])[V(gm[[1]])$names=="ec:4.1.2.13"]
+betweenness(gm[[1]],index1)
+@
+
+
+Note that we should see node index value using the function \Rfunction{as.integer}. The direct display is not real node index value, but the value of the "id" attribute of nodes.
+<<>>=
+#node index value
+as.integer(index1)
+#direct display is not real node index value.
+index1
+#it is equal to the value of the "id" attribute.
+index1$id
+@
+
+\subsection{Convert non-metabolic pathways to graphs}\label{getNMGraphsection}
+
+\subsubsection{The default method to convert non-metabolic pathways to graphs}
+
+The function \Rfunction{getNonMetabolicGraph} can convert non-metabolic pathways to directed graphs. An result graph mainly contains two types of nodes: gene products (KOs) and maps that represent pathways linked with the pathway graph. Sometimes, there are several compounds in pathways such as IP3, DAG, cAMP, ca+, etc. Edges are obtained from relations. In particular, two nodes are connected by an edge if they have relationships get from relation element of the KGML file. The relation element specifies relationships between nodes. For example, the attribute PPrel represents protein-protein interaction such as binding and modification. Other information such as node attribute, pathway attribute, etc. is converted to attribute of graphs. The following commands can convert non-metabolic pathways to graphs. The result graph of the MAPK signaling pathway is shown in Figure \ref{getNonMetabolicGraph1}.
+
+<<getNonMetabolicGraph1, fig=TRUE, include=FALSE, prefix=FALSE>>=
+#get path
+pathn<-paste(system.file(package="iSubpathwayMiner"),
+"/localdata/kgml/non-metabolic/ko/",sep="")
+pn<-getPathway(pathn,c("ko04010.xml","ko04020.xml"))
+#Convert pathways to graphs
+gn1<-getNonMetabolicGraph(pn)
+#name of the first pathway
+gn1[[1]]$title
+#visualize
+plotGraph(gn1[[1]])
+@
+
+\begin{figure}[htbp]
+\begin{center}  
+\includegraphics[width=1.0\textwidth]{getNonMetabolicGraph1}
+\caption{The MAPK signaling pathway graph with ambiguous edges as bi-directed.}\label{getNonMetabolicGraph1}
+\end{center}
+\end{figure}
+
+\subsubsection{The alternative method to convert non-metabolic pathways to graphs}
+
+In non-metabolic pathways, there are usually many different types of edges between nodes. There are four fundamental types of edges including ECrel (enzyme-enzyme relation), PPrel (protein-protein interaction), GErel (gene expression interaction) and PCrel (protein-compound interaction). Each fundamental type usually contains many subtypes such as compound, hidden compound, activation, inhibition, expression, repression, indirect effect, state change, binding/assoction, dissociation, and missing interaction. Detailed information is provided in \url{http://www.genome.jp/kegg/xml/docs/}. 
+
+According to these substypes, we can obtain edge direction. For example, "activation" means that protein A activates B (A-->B). However, not all types of edges have definite direction. For example, "binding/association" means that there is the binding or association relation between protein A and protein B but we don't know A-->B or B-->A. In addition, an edge is also likely to have no subtype and thus we can't know its direction. The argument \Rfunarg{ambiguousEdgeDirection} can define direction of ambiguous edges according to subtype of edges. Users firstly define which subtype of edges are considered as ambiguous edges by setting the argument \Rfunarg{ambiguousEdgeList}. The default ambiguous edges include "compound", "hidden compound", "state change", "binding/association", "dissociation", and "unknow". Then users can define their direction through setting the value of the argument \Rfunarg{ambiguousEdgeDirection} as one of "single", "bi-directed" or "delete", which means to convert ambiguous edges to "-->", "<-->", or to delete these ambiguous edges. The default value is "bi-directed".
+
+The following commands convert pathways to graphs with ambiguous edges deleted. The result graph of the MAPK signaling pathway is shown in Figure \ref{getNonMetabolicGraph2}. Compared with Figure \ref{getNonMetabolicGraph1}, some edges are deleted such as edges related with the compound "C00076" because the default ambiguous edges include "compound". 
+
+<<getNonMetabolicGraph2, fig=TRUE, include=FALSE, prefix=FALSE>>=
+#Convert pathways to graphs with ambiguous edges as deleted
+gn2<-getNonMetabolicGraph(pn,ambiguousEdgeDirection="delete")
+#visualize
+plotGraph(gn2[[1]])
+@
+
+\begin{figure}[htbp]
+\begin{center}  
+\includegraphics[width=1.0\textwidth]{getNonMetabolicGraph2}
+\caption{The MAPK signaling pathway graph with ambiguous edges as single directed. For example, edges related with the compound "C00076" were deleted compared with Figure \ref{getNonMetabolicGraph1}}\label{getNonMetabolicGraph2}
+\end{center}
+\end{figure}
+
+The function \Rfunction{getNonMetabolicGraph} has also some other arguments. For example, the argument \Rfunarg{simpleGraph} can be used to obtain simple graphs (see the section \ref{simpleGraphsection}). The default value is TRUE. 
+
+\subsection{Convert pathway graphs to other derivative graphs}\label{getDerivativesGraphsection}
+
+
+After using the function \Rfunction{getMetabolicGraph} or \Rfunction{getNonMetabolicGraph} to convert pathways to graphs, users can change these pathway graphs to other derivative graphs. To do it, we develop the function \Rfunction{getUGraph}, \Rfunction{mapNode}, \Rfunction{filterNode}, \Rfunction{simplifyGraph}, \Rfunction{mergeNode}, \Rfunction{getSimpleGraph}, and \Rfunction{expandNode}. Through these functions, many graph-based reconstruction strategy of pathways can be done such as constructing undirected graphs (Figure \ref{getUGraph}), organism-specific and idType-specific graphs (Figure \ref{mapNode}), the metabolic graph with enzymes (compounds) as nodes and compounds (enzymes) as edges (Figure \ref{simplifyGraphGene} and \ref{simplifyGraphCompound}), etc. Furthermore, the combination of these functions can also get more useful graphs from pathway data (see the section \ref{applicationexample}). The following section will detailedly introduce the usage of the related functions. 
+
+We firstly construct metabolic pathway graphs (\Robject{gm}) and non-metabolic pathway graphs (\Robject{gn}) as examples of input data. The commands are as follows:
+<<>>=
+##get metabolic pathway graphs
+#get path of KGML files
+path<-paste(system.file(package="iSubpathwayMiner"),
+"/localdata/kgml/metabolic/ec/",sep="")
+#convert metabolic pathways to graphs
+gm<-getMetabolicGraph(getPathway(path,c("ec00010.xml")))
+#show title of pathway graphs
+sapply(gm,function(x) x$title)
+
+##get non-metabolic pathway graphs
+#get path
+path1<-paste(system.file(package="iSubpathwayMiner"),
+"/localdata/kgml/non-metabolic/ko/",sep="")
+#convert non-metabolic pathways to graphs
+gn<-getNonMetabolicGraph(getPathway(path1,c("ko04010.xml","ko04020.xml")),
+ambiguousEdgeDirection="bi-directed")
+#show title of pathway graphs
+sapply(gn,function(x) x$title)
+@
+Note that the variable \Robject{gm} is a list of metabolic pathway graphs. The variable \Robject{gn} is a list of non-metabolic pathway graphs.
+
+\subsubsection{Convert pathway graphs to undirected graphs}
+The function \Rfunction{getUGraph} can convert directed graphs to undirected graphs. The following commands can get the undirected simple pathway graph (see Figure \ref{getUGraph} for the result graph).
+
+<<getUGraph,fig=TRUE,include=FALSE,prefix=FALSE>>=
+#get undirected pathway graphs
+g1<-getUGraph(gm,simpleGraph=TRUE)
+#visualzie an undirected graph
+plotGraph(g1[[1]])
+@
+Converting directed graphs to undirected graphs may cause multiple edges. Through setting the argument \Rfunarg{simpleGraph} value as TRUE, these edges can be merged by calling the function \Rfunction{getSimpleGraph} (see the section \ref{simpleGraphsection}), and finally simple graphs will be obtained. The default value of the argument \Rfunarg{simpleGraph} is TRUE.
+
+\begin{figure}[htbp]
+\begin{center}  
+\includegraphics[width=1.0\textwidth]{getUGraph}
+\caption{The undirected graph of the Glycolysis / Gluconeogenesis pathway.}\label{getUGraph}
+\end{center}
+\end{figure}
+
+\subsubsection{Map current organism-specific gene identifiers to nodes in pathway graphs}
+The function \Rfunction{mapNode} can map current organism-specific gene identifiers to nodes of graphs. We can use the function \Rfunction{getOrgAndIdType} to know the type of organism and identifier in the current study:
+<<>>=
+getOrgAndIdType()
+@ 
+The result means that the type of organism and identifier in the current study are Homo sapiens (hsa) and Entrez gene identifiers (NCBI-geneid), which is the default value of the system (see the section \ref{updateOrgAndIdType}).
+
+The following commands use the function \Rfunction{mapNode} to map human gene identifiers (NCBI-geneid) to nodes in pathway graphs. Figure \ref{mapNode} shows the result graph of Glycolysis / Gluconeogenesis pathway after performing the function. We can see the value of names attribute of some nodes revised. Green rectangle nodes are those that can correspond to gene identifiers, suggesting that these nodes are enzymes that human genes can encode. White rectangle nodes are those that can't correspond to gene identifiers, indicating that they may not be enzymes which human genes can encode. Therefore, the graph can be considered as human Glycolysis / Gluconeogenesis pathway graph.
+
+<<mapNode,fig=TRUE,include=FALSE,prefix=FALSE>>=
+#see the names attribute of nodes. 
+V(gm[[1]])[1:10]$names
+#get the organism-specific and idType-specific graph
+g1<-mapNode(gm)
+#see the names attribute of nodes in the new graph. 
+#some node names are revised as NCBI-gene IDs 
+V(g1[[1]])[1:10]$names
+#visualize the Glycolysis / Gluconeogenesis pathway graph
+plotGraph(g1[[1]])
+@
+The result graph has many changes. In particular, the names attribute value of nodes that can correspond to gene IDs are replaced as the corresponding gene IDs. Accordingly, the values of type attribute of nodes are revised to "gene". The values of attribute graphics\rule[-2pt]{0.2cm}{0.5pt}name, graphics\rule[-2pt]{0.2cm}{0.5pt}fgcolor, and graphics\rule[-2pt]{0.2cm}{0.5pt}bgcolor are also resived. Finally, pathway graphs will be converted to organism-specific graphs as well as idType-specific ones. 
+
+\begin{figure}[htbp]
+\begin{center}  
+\includegraphics[width=1.0\textwidth]{mapNode}
+\caption{The organism-specific and idType-specific graph (org:human, idType:NCBI-geneid). The graph can be considered as human Glycolysis / Gluconeogenesis pathway graph.}\label{mapNode}
+\end{center}
+\end{figure}
+
+In fact, there are the KGML files of most organism-specific pathways in KEGG and the files are stored in KEGG ftp site \url{ftp://ftp.genome.jp/pub/kegg/xml/kgml/metabolic/organisms}. Our method can get the results similar to KEGG organism-specific pathways.  Most organism-specific pathway graphs can also be supported by using the function \Rfunction{updateOrgAndIdType} to change the current organism. Compared with KEGG organism-specific pathways, our method can map many different cross-reference identifiers (e.g., NCBI-geneid, NCBI-gi) to nodes by using the function \Rfunction{updateOrgAndIdType} to change the current \Robject{idType}. In the XML files of KEGG organism-specific pathways \url{ftp://ftp.genome.jp/pub/kegg/xml/kgml/metabolic/organisms}, only KEGG gene identifiers are available. The function \Rfunction{mapNode} can automatically convert reference pathway graphs to organism-specific pathway graphs. So, the method may be more convenient in obtaining organism-specific pathways than downloading large numbers of pathway data from KEGG ftp site \url{ftp://ftp.genome.jp/pub/kegg/xml/kgml/metabolic/organisms}. Moreover, gene identifiers such as NCBI-geneid are also more popular compared with KEGG gene IDs.  
+
+\subsubsection{Filter nodes of pathway graphs}
+
+The function \Rfunction{filterNode} is used to filter "not interesting" nodes. For example, it may be necessary to ignore nodes with type="map" when focusing on components such as compounds and gene products. The function will delete nodes according to the argument \Rfunarg{nodeType} and thus related edges are also deleted. 
+
+The following commands can delete nodes whose types are "map". Figure \ref{filterNode} shows the result graph of the MAPK signaling pathway after deleting nodes with type="map".
+
+<<filterNode,fig=TRUE,include=FALSE,prefix=FALSE>>=
+#We display them before nodes are filtered
+V(gn[[1]])$type
+#delete nodes with type="map"
+g1<-filterNode(gn,nodeType=c("map"))
+#The "map" nodes are deleted in the new graph. 
+V(g1[[1]])$type
+#visulize the graph
+plotGraph(g1[[1]])
+@
+
+\begin{figure}[htbp]
+\begin{center}  
+\includegraphics[width=1.0\textwidth]{filterNode}
+\caption{The MAPK signaling pathway graph after deleting nodes with type="map"}\label{filterNode}
+\end{center}
+\end{figure}
+
+The following commands can delete nodes whose types are not genes or gene products
+<<>>=
+g2<-filterNode(gn,nodeType=c("compound","map"))
+@
+
+We can also filter nodes of metabolic pathway graph using the function. For metabolic graphs, it is fit to filter nodes with type="map". However, it is generally not suitable to use the function to filter compounds or gene products because most of related edges are deleted when node disappears. We can instead use the function \Rfunction{simplifyGraph} to get graphs with gene products as nodes and compounds as edges (see the section simplifyGraphsection). 
+
+\subsubsection{Simplify pathway graphs as graphs with only gene products (or only compounds) as nodes}\label{simplifyGraphsection}
+
+When we focus on gene products, compounds may be not important. Similarly, gene products may be not important when focusing on metabolites (compounds). For metabolic pathway graphs, a useful approach is to get graphs with gene products (or compounds) as nodes and compounds (gene products) as edges. 
+
+The function \Rfunction{simplifyGraph} can convert pathways to graphs with gene products (or compounds) as nodes and compounds (or gene products) as edges. We take an example of constructing metabolic pathway graphs with enzymes as nodes and compounds as edges. Firstly, all enzymes in a pathway graph are used as nodes. For undirected, two nodes are then connected by an edge if their corresponding reactions have a common compound. For directed, two nodes are connected by an edge if their corresponding reactions have a common compound and two nodes are reachable through the compound. Finally, compound information is added into edge attribute of new graphs. Similarly, a metabolic pathway graph can be converted to a graph with compounds as nodes. Two nodes are connected by an edge if they belong to the same reaction. Enzyme information is added into edge attribute of new graphs.   
+
+The following commands construct pathway graphs with enzymes as nodes and compounds as edges. 
+<<simplifyGraphGene,fig=TRUE,include=FALSE,prefix=FALSE>>=
+#get graphs with enzymes as nodes and compounds as edges
+g1<-simplifyGraph(gm,nodeType="geneProduct")
+#see the names attribute of three edges
+E(g1[[1]])[1:3]$names
+#visualize a graph
+plotGraph(g1[[1]],edge.label=E(g1[[1]])[1:3]$names)
+@
+As showed in Figure \ref{simplifyGraphGene}, the result show that nodes are enzymes and edges represent compounds shared by them.
+
+\begin{figure}[htbp]
+\begin{center}  
+\includegraphics[width=1.0\textwidth]{simplifyGraphGene}
+\caption{The graph with enzymes as nodes and compounds as edges.}\label{simplifyGraphGene}
+\end{center}
+\end{figure}
+
+The following commands construct graphs with compounds as nodes and enzymes as edges. As showed in Figure \ref{simplifyGraphCompound}, nodes are compounds and edges represent enzymes catalyzing the corresponding reaction.
+
+<<simplifyGraphCompound,fig=TRUE,include=FALSE,prefix=FALSE>>=
+#get graphs with compounds as nodes and enzymes as edges
+g2<-simplifyGraph(gm,nodeType="compound")
+#see the names attribute of three edges
+E(g2[[1]])[1:3]$names
+#visualize a graph
+plotGraph(g2[[1]],edge.label=E(g2[[1]])[1:3]$names)
+@
+
+\begin{figure}[htbp]
+\begin{center}  
+\includegraphics[width=1.0\textwidth]{simplifyGraphCompound}
+\caption{The graph with compounds as nodes and enzymes as edges.}\label{simplifyGraphCompound}
+\end{center}
+\end{figure}
+
+The function can also be applied to non-metabolic pathway graphs. In non-metabolic pathways, most of nodes are gene products and only several nodes are compounds. For example, in the calcium signaling pathway (Figure \ref{simplifyNonOld}), most of nodes are gene products. But several nodes are compounds (e.g., ca2+). They usually interact with other gene products (Figure \ref{simplifyNonOld}). Sometimes, for non-metabolic pathways, we may want to construct graphs with gene products as nodes and maintain these indirect edges that share the same compound. To do it, we can use the function \Rfunction{simplifyGraph} to simplify graphs to those with gene products as nodes and maintain two kinds of edges: direct edges and indirect edges. The function \Rfunction{simplifyGraph} obtains indirect edges. The argument \Rfunarg{directEdge} is used to determine whether direct edges should be obtained together. 
+
+The following commands can convert non-metabolic pathways to graphs with gene products as nodes. The nodes are connected by an edge if they have direct relations or share a compound. Figure \ref{simplifyNonNew} shows the result graph. We can compare it with graph before conversion (Figure \ref{simplifyNonOld}). 
+
+<<simplifyNonNew,fig=TRUE,include=FALSE,prefix=FALSE>>=
+#get the graph with gene products as nodes. 
+#Edges contain direct and indirect edges
+g3<-simplifyGraph(gn,nodeType="geneProduct",directEdge=TRUE)
+#visualize the new graph
+plotGraph(g3[[2]])
+@
+
+\begin{figure}[htbp]
+\begin{center}  
+\includegraphics[width=1.0\textwidth]{simplifyNonNew}
+\caption{The graph of the calcium signaling pathway with gene products as nodes. Edges contain direct edges and indirect edges that get from shared compound.}\label{simplifyNonNew}
+\end{center}
+\end{figure}
+
+<<simplifyNonOld,echo=FALSE,fig=TRUE,include=FALSE,prefix=FALSE>>=
+#graph before conversion
+#see pathway name
+gn[[2]]$title
+#visualize
+plotGraph(gn[[2]])
+@
+
+\begin{figure}[htbp]
+\begin{center}  
+\includegraphics[width=1.0\textwidth]{simplifyNonOld}
+\caption{The calcium signaling pathway graph before conversion.}\label{simplifyNonOld}
+\end{center}
+\end{figure}
+
+\subsubsection{Expand nodes of pathway graphs}
+
+In pathways, some nodes may have multiple components, which are considered as components of "paralogues". For example, node PDE, which is the enzyme node in Purine metabolism (ec00230), maps to two enzymes: PDE (ec:3.1.4.17) and cGMP-PDE (ec:3.1.4.35). The function \Rfunction{expandNode} is just used to expand those nodes with multiple components. Users can select which types of nodes are expanded using the argument \Rfunarg{nodeType}. The default values represent that all nodes are expanded. The following commands expand nodes of non-metabolic pathway graphs:
+
+<<>>=
+#We firstly display node number before nodes are expanded
+vcount(gn[[1]])
+##expand nodes in Graphs
+g1<-expandNode(gn)
+#We can see change of node number in the new graph:
+#node number after nodes are expanded
+vcount(g1[[1]])
+@
+
+After carrying out the function \Rfunction{expandNode}, a node is usually expanded into many nodes. It is difficult to display the expanded graphs using the KEGG style because coordinates of new nodes can't be defined effectively. Therefore, we suggest that users had better use other automatically layout methods to visualize the expanded graphs (e.g., the "sphere" style, see the section \ref{applicationexample}). The following commands display the expanded graph of the MAPK signaling pathway using the "sphare" style. 
+
+<<expandNode1,fig=TRUE,include=FALSE,prefix=FALSE>>=
+plotGraph(g1[[1]],layout=layout.sphere)
+@
+The result graph shows in Figure \ref{expandNode1}. 
+
+\begin{figure}[htbp]
+\begin{center}  
+\includegraphics[width=1.0\textwidth]{expandNode1}
+\caption{The expanded graph of the MAPK signaling pathway. The graph is displayed using the "sphare" style}\label{expandNode1}
+\end{center}
+\end{figure}
+
+
+The argument \Rfunarg{nodeType} can determine which types of nodes should be expanded. Expanding nodes with certain node types is also available. The following commands only expand nodes that belong to gene products.
+
+<<>>=
+#only expand nodes with type="enzyme" or "ortholog" in graphs
+g2<-expandNode(gn,nodeType=c("ortholog","enzyme"))
+@
+
+\subsubsection{Get simple pathway graphs}\label{simpleGraphsection}
+
+If a graph is simple, it does not contain loop or/and multiple edges. A loop edge is an edge where the two endpoints have the same node (vertex). Two edges are multiple edges if they have exactly the same two endpoints. If graphs are not simple, some graph-based algorithms may be not applied. We can use the function \Rfunction{getSimpleGraph} to get a simple graph. Note that information of multiple edges is kept in edge attribute using ";" as separator.
+
+The function \Rfunction{is.simple} can check whether a graph is simple as follows:
+<<>>=
+all(sapply(gm,is.simple))
+@
+
+
+\subsubsection{Merge nodes with the same names}
+
+A pathway usually includes some nodes with the same names. For example, an enzyme may appear repeatedly in a pathway. As shown in Figure \ref{getMetabolicGraph1}, the Glycolysis / Gluconeogenesis pathway contain enzymes that appear repeatedly such as 2.7.1.69, 4.1.1.1, etc. The function \Rfunction{mergeNode} can merge those nodes with the same names. Therefore, each node in the result graph will has unique name. The edges of the merged nodes are obtained from edges of original nodes. After nodes are merged, multiple edges or loops may appear. The argument \Rfunarg{simpleGraph} can delete them, which will return simple graphs (see the section \ref{simpleGraphsection}). The following commands can get the graph in which nodes with the same names are merged.
+
+<<mergeNode,fig=TRUE,include=FALSE,prefix=FALSE>>=
+#get node number before merge
+vcount(gm[[1]])
+#merge nodes
+g1<-mergeNode(gm,simple=FALSE)
+#get node number after merge
+vcount(g1[[1]])
+#visualize
+plotGraph(g1[[1]])
+@
+The result is shown in Figure \ref{mergeNode}.
+
+\begin{figure}[!hp]
+\begin{center}
+\includegraphics[width=1.0\textwidth]{mergeNode}
+\caption{The graph in which nodes with the same names are merged.}\label{mergeNode}
+\end{center}
+\end{figure}
+
+
+\subsection{The integrated application of pathway reconstruct methods}\label{applicationexample}
+
+In the section, we have provided some examples for converting pathways to graphs using the combination of graph conversion functions including \Rfunction{getUGraph}, \Rfunction{mapNode}, \Rfunction{filterNode}, \Rfunction{simplifyGraph}, \Rfunction{mergeNode}, \Rfunction{getSimpleGraph}, and \Rfunction{expandNode}, etc. Through the combination of these functions, many conversion strategies of pathway graphs can be implemented.
+
+The section introduces the 24 examples of pathway graphs. They include enzyme-compound (KO-compound) pathway graphs (Figure \ref{combination1-1}, \ref{combination1-2}, \ref{combination1-3}, \ref{combination1-4}, \ref{combination1-5}, \ref{combination1-6}, \ref{combination1-7}, and \ref{combination1-8}), enzyme-enzyme (KO-KO) pathway graphs (Figure \ref{combination2-1}, \ref{combination2-2}, \ref{combination2-3}, \ref{combination2-4}, \ref{combination2-5}, \ref{combination2-6}, \ref{combination2-7} and \ref{combination2-8}), compound-compound pathway graphs (Figure \ref{combination3-1}, \ref{combination3-2}, \ref{combination3-3} and \ref{combination3-4}), organism-specific gene-gene pathway graphs (Figure  \ref{combination4-1}, \ref{combination4-2}, \ref{combination4-3} and \ref{combination4-4}), etc. These examples represent current major applications \cite{Smart2008, Schreiber2002, Klukas2007, Kanehisa2006, Goffard2007, Koyuturk2004, Hung2010, Xia2010, Jeong2000, Antonov2008, Guimera2005, Draghici2007, Li2009, Ogata2000, Hung2010, Barabasi2004}. In the following subsection, we will detailedly introduce the combination usage of the graph conversion functions. 
+
+\subsubsection{Example 1: enzyme-compound (KO-compound) pathway graphs}\label{example1}
+
+For metabolic pathways, the following commands can get pathway graphs with enzymes and compounds as nodes. 
+
+<<combination1-1,fig=TRUE,include=FALSE,prefix=FALSE>>=
+#get graphs with enzymes and compounds as nodes
+g1<-filterNode(gm,nodeType=c("map"))
+#visualize
+plotGraph(g1[[1]])
+@
+Figure \ref{combination1-1} shows the result graph of the Glycolysis / Gluconeogenesis pathway. Compared with original pathway graph (Figure \ref{getMetabolicGraph1}), the "map" nodes disappear in the new graph. 
+
+\begin{figure}[htbp]
+\begin{center}
+\includegraphics[width=1.0\textwidth]{combination1-1}
+\caption{The Glycolysis / Gluconeogenesis pathway graph with enzymes and compounds as nodes. Compared with original pathway graph (Figure \ref{getMetabolicGraph1}), the "map" nodes disappear in the new graph.}\label{combination1-1}
+\end{center}
+\end{figure}
+
+If we apply the above method to all metabolic pathways, we can get all metabolic pathway graphs with enzymes and compounds as nodes. To do it easily, we have developed the function \Rfunction{getMetabolicECCOGraph}. The following command can use the function to get all metabolic pathway graphs with enzymes and compounds as nodes.
+
+\begin{Schunk}
+\begin{Sinput}
+> #get all metabolic pathway graphs with enzymes and compounds as nodes
+> graphList<-getMetabolicECCOGraph()
+\end{Sinput}
+\end{Schunk}
+
+The result of the function are equal to the result of the following commands:
+\begin{Schunk}
+\begin{Sinput}
+> #get all metabolic pathway data
+> metabolicEC<-get("metabolicEC",envir=k2ri)
+> ##write the results to tab delimited file. 
+> graphList<-filterNode(getMetabolicGraph(metabolicEC),nodeType=c("map"))
+\end{Sinput}
+\end{Schunk}
+The variable \Robject{metabolicEC} stores all metabolic pathway data (see the section \ref{managementSection}). The variable \Robject{graphList} stores all metabolic pathway graphs with enzymes and compounds as nodes.
+
+
+The following commands can get the corresponding undirected graphs, that is, the undirected graphs with enzymes and compounds as nodes. The function \Rfunction{getMetabolicECCOUGraph} can get all results.
+
+<<combination1-2,fig=TRUE,include=FALSE,prefix=FALSE>>=
+#get the undirected graphs with enzymes and compounds as nodes
+g2<-filterNode(getUGraph(gm),nodeType=c("map"))
+#visualize
+plotGraph(g2[[1]])
+@
+Figure \ref{combination1-2} shows the result graph of the Glycolysis / Gluconeogenesis pathway. 
+
+\begin{figure}[htbp]
+\begin{center}
+\includegraphics[width=1.0\textwidth]{combination1-2}
+\caption{The undirected Glycolysis / Gluconeogenesis pathway graph with enzymes and compounds as nodes. Compared with original pathway graph (Figure \ref{getMetabolicGraph1}), the "map" nodes disappear in the new graph and edges are undirected.}\label{combination1-2}
+\end{center}
+\end{figure}
+
+The following commands can get graphs with enzymes and compounds as nodes, in which each node only contains one enzyme/compound and each enzyme/compound only appears once. The function \Rfunction{getMetabolicECCOEMGraph} can get all results.
+
+<<combination1-3,fig=TRUE,include=FALSE,prefix=FALSE>>=
+#get graphs with enzymes and compounds as nodes
+#And, each node only contains one enzyme/compound and 
+#each enzyme/compound only appears once in the graph.
+g3<-mergeNode(expandNode(filterNode(gm,nodeType=c("map"))))
+#visualize
+plotGraph(g3[[1]])
+@
+Figure \ref{combination1-3} shows the result graph of the Glycolysis / Gluconeogenesis pathway. Compared with original pathway graph (Figure \ref{getMetabolicGraph1}), the "map" nodes disappear in the new graph. Moreover, each node only contains one enzyme/compound and each enzyme/compound only appears once in the graph. 
+
+\begin{figure}[htbp]
+\begin{center}
+\includegraphics[width=1.0\textwidth]{combination1-3}
+\caption{The Glycolysis / Gluconeogenesis pathway graph with enzymes and compounds as nodes. Compared with original pathway graph (Figure \ref{getMetabolicGraph1}), the "map" nodes disappear in the new graph. Moreover, each node only contains one enzyme/compound and each enzyme/compound only appears once in the graph.}\label{combination1-3}
+\end{center}
+\end{figure}
+
+The following commands can get the corresponding undirected graphs. The function \Rfunction{getMetabolicECCOUEMGraph} can get all results.
+
+<<combination1-4,fig=TRUE,include=FALSE,prefix=FALSE>>=
+#get the undirected graphs with enzymes and compounds as nodes
+#And, each node only contains one enzyme/compound and 
+#each enzyme/compound only appears once in the graph.
+g4<-mergeNode(expandNode(filterNode(getUGraph(gm),nodeType=c("map"))))
+#visualize
+plotGraph(g4[[1]])
+@
+Figure \ref{combination1-4} shows the result graph of the Glycolysis / Gluconeogenesis pathway. 
+
+\begin{figure}[htbp]
+\begin{center}
+\includegraphics[width=1.0\textwidth]{combination1-4}
+\caption{The undirected Glycolysis / Gluconeogenesis pathway graph with enzymes and compounds as nodes. Compared with original pathway graph (Figure \ref{getMetabolicGraph1}), the "map" nodes disappear in the new graph and edges are undirected. Moreover, each node only contains a enzyme/compound and each enzyme/compound only appears once in the graph.}\label{combination1-4}
+\end{center}
+\end{figure}
+
+For non-metabolic pathways, the following commands can get graphs with KOs and compounds as nodes. The function \Rfunction{getNonMetabolicKOCOGraph} can get all results.
+
+<<combination1-5,fig=TRUE,include=FALSE,prefix=FALSE>>=
+#get graphs with KOs and compounds as nodes
+g5<-filterNode(gn,nodeType=c("map"))
+#visualize
+plotGraph(g5[[1]])
+@
+Figure \ref{combination1-5} shows the result graph of the MAPK signaling pathway. Compared with original pathway graph (Figure \ref{getNonMetabolicGraph1}), the "map" nodes disappear in the new graph. 
+
+\begin{figure}[htbp]
+\begin{center}
+\includegraphics[width=1.0\textwidth]{combination1-5}
+\caption{The MAPK signaling pathway graph with KOs and compounds as nodes. Compared with original pathway graph (Figure \ref{getNonMetabolicGraph1}), the "map" nodes disappear in the new graph.}\label{combination1-5}
+\end{center}
+\end{figure}
+
+The following commands can get the undirected graphs with KOs and compounds as nodes. The function \Rfunction{getNonMetabolicECCOUGraph} can get all results. 
+
+<<combination1-6,fig=TRUE,include=FALSE,prefix=FALSE>>=
+#get the undirected graphs with KOs and compounds as nodes
+g6<-filterNode(getUGraph(gn),nodeType=c("map"))
+#visualize
+plotGraph(g6[[1]])
+@
+Figure \ref{combination1-6} shows the result graph of the MAPK signaling pathway. 
+
+\begin{figure}[htbp]
+\begin{center}
+\includegraphics[width=1.0\textwidth]{combination1-6}
+\caption{The undirected MAPK signaling pathway graph with KOs and compounds as nodes. Compared with original pathway graph (Figure \ref{getNonMetabolicGraph1}), the "map" nodes disappear in the new graph and edges are undirected.}\label{combination1-6}
+\end{center}
+\end{figure}
+
+The following commands can get graphs with KOs and compounds as nodes. And, each node only contains a KO/compound and each KO/compound only appears once in the graph. The function \Rfunction{getNonMetabolicKOCOEMGraph} can get all results.
+
+<<combination1-7,fig=TRUE,include=FALSE,prefix=FALSE>>=
+#get graphs with KOs and compounds as nodes
+#And, each node only contains a KO/compound and 
+#each KO/compound only appears once in the graph.
+g7<-mergeNode(expandNode(filterNode(gn,nodeType=c("map"))))
+#visualize
+plotGraph(g7[[1]],layout=layout.sphere)
+@
+Figure \ref{combination1-7} shows the result graph of the MAPK signaling pathway. Compared with original pathway graph (Figure \ref{getNonMetabolicGraph1}), the "map" nodes disappear in the new graph. Moreover, each node only contains a KO/compound and each KO/compound only appears once in the graph. Note that the KEGG layout style is not available because too many nodes have the same coordinates. Instead, we can use other layout styles such as \Rfunarg{layout.sphere} (see the section \ref{visulizeLayoutSection}).
+
+\begin{figure}[htbp]
+\begin{center}
+\includegraphics[width=1.0\textwidth]{combination1-7}
+\caption{The MAPK signaling pathway graph with KOs and compounds as nodes. Compared with original pathway graph (Figure \ref{getNonMetabolicGraph1}), the "map" nodes disappear in the new graph. Moreover, each node only contains a KO/compound and each KO/compound only appears once in the graph.}\label{combination1-7}
+\end{center}
+\end{figure}
+
+The following commands can get the corresponding undirected graphs. The function \Rfunction{getNonMetabolicKOCOUEMGraph} can get all results.
+
+<<combination1-8,fig=TRUE,include=FALSE,prefix=FALSE>>=
+#get the undirected graphs with KOs and compounds as nodes
+#And, each node only contains a KO/compound and 
+#each KO/compound only appears once in the graph.
+g8<-mergeNode(expandNode(filterNode(getUGraph(gn),nodeType=c("map"))))
+#visualize
+plotGraph(g8[[1]],layout=layout.sphere)
+@
+Figure \ref{combination1-8} shows the result graph of the MAPK signaling pathway.
+
+\begin{figure}[htbp]
+\begin{center}
+\includegraphics[width=1.0\textwidth]{combination1-8}
+\caption{The MAPK signaling pathway graph with KOs and compounds as nodes. Compared with original pathway graph (Figure \ref{getNonMetabolicGraph1}), the "map" nodes disappear in the new graph and edges are undirected. Moreover, each node only contains a KO/compound and each KO/compound only appears once in the graph.}\label{combination1-8}
+\end{center}
+\end{figure}
+
+\subsubsection{Example 2: enzyme-enzyme (KO-KO) pathway graphs}\label{example2}
+
+For metabolic pathways, the following commands can get graphs with enzymes as nodes and compounds as edges. The function \Rfunction{getMetabolicECECGraph} can get the results of all metabolic pathway graphs with enzymes as nodes and compounds as edges.
+
+<<combination2-1,fig=TRUE,include=FALSE,prefix=FALSE>>=
+#get graphs with enzymes as nodes and compounds as edges
+g1<-simplifyGraph(filterNode(gm,nodeType=c("map")),nodeType="geneProduct")
+#visualize
+plotGraph(g1[[1]])
+@
+Figure \ref{combination2-1} shows the result graph of the Glycolysis / Gluconeogenesis pathway. 
+
+\begin{figure}[htbp] 
+\begin{center}
+\includegraphics[width=1.0\textwidth]{combination2-1}
+\caption{The Glycolysis / Gluconeogenesis pathway graph with enzymes as nodes and compounds as edges.}\label{combination2-1}
+\end{center}
+\end{figure}
+
+The following commands can get the corresponding undirected graphs, that is, the undirected graphs with enzymes as nodes and compounds as edges. The function \Rfunction{getMetabolicECECUGraph} can get all results.
+
+<<combination2-2,fig=TRUE,include=FALSE,prefix=FALSE>>=
+#get the undirected graphs with enzymes as nodes and compounds as edges
+g2<-simplifyGraph(filterNode(getUGraph(gm),nodeType=c("map")),nodeType="geneProduct")
+#visualize
+plotGraph(g2[[1]])
+@
+Figure \ref{combination2-2} shows the result graph of the Glycolysis / Gluconeogenesis pathway. 
+
+\begin{figure}[htbp] 
+\begin{center}
+\includegraphics[width=1.0\textwidth]{combination2-2}
+\caption{The undirected Glycolysis / Gluconeogenesis pathway graph with enzymes as nodes and compounds as edges.}\label{combination2-2}
+\end{center}
+\end{figure}
+
+The following commands can get graphs with enzymes as nodes and compounds as edges. And, each node contains only one enzyme and each enzyme only appears once in the graph. The graph can be treated as the enzyme-enzyme network obtained from the Glycolysis / Gluconeogenesis pathway. The function \Rfunction{getMetabolicECECEMGraph} can get all results.
+
+<<combination2-3,fig=TRUE,include=FALSE,prefix=FALSE>>=
+#get graphs with enzymes as nodes and compounds as edges
+#And, each node contains only one enzyme and each enzyme only appears once. 
+g3<-mergeNode(expandNode(simplifyGraph(filterNode(gm,
+nodeType=c("map")),nodeType="geneProduct")))
+#visualize
+plotGraph(g3[[1]])
+@
+Figure \ref{combination2-3} shows the result graph of the Glycolysis / Gluconeogenesis pathway.
+
+\begin{figure}[htbp] 
+\begin{center}
+\includegraphics[width=1.0\textwidth]{combination2-3}
+\caption{The Glycolysis / Gluconeogenesis pathway graph with enzymes as nodes and compounds as edges. Moreover, each node contains only one enzyme and each enzyme only appears once in the graph. The graph can be treated as the enzyme-enzyme network obtained from the Glycolysis / Gluconeogenesis pathway.}\label{combination2-3}
+\end{center}
+\end{figure}
+
+The following commands can get the corresponding undirected graphs. The function \Rfunction{getMetabolicECECUEMGraph} can get all results.
+
+<<combination2-4,fig=TRUE,include=FALSE,prefix=FALSE>>=
+#get undirected graphs with enzymes as nodes and compounds as edges.
+#And, each node contains only one enzyme and each enzyme only appears once. 
+g4<-mergeNode(expandNode(simplifyGraph(filterNode(getUGraph(gm),
+nodeType=c("map")),nodeType="geneProduct")))
+#visualize
+plotGraph(g4[[1]])
+@
+Figure \ref{combination2-4} shows the result graph of the Glycolysis / Gluconeogenesis pathway. 
+
+\begin{figure}[htbp] 
+\begin{center}
+\includegraphics[width=1.0\textwidth]{combination2-4}
+\caption{The undirected Glycolysis / Gluconeogenesis pathway graph with enzymes as nodes and compounds as edges. Moreover, each node contains only one enzyme and each enzyme only appears once in the graph. The graph can be treated as the enzyme-enzyme network obtained from the Glycolysis / Gluconeogenesis pathway.}\label{combination2-4}
+\end{center}
+\end{figure}
+
+
+For non-metabolic pathways, the following commands can get graphs with KOs as nodes. The function \Rfunction{getNonMetabolicKOKOGraph} can get all results.
+
+<<combination2-5,fig=TRUE,include=FALSE,prefix=FALSE>>=
+#get graphs with KOs as nodes
+g5<-simplifyGraph(filterNode(gn,nodeType=c("map")),nodeType="geneProduct")
+#visualize
+plotGraph(g5[[1]])
+@
+Figure \ref{combination2-5} shows the result graph of the MAPK signaling pathway. 
+
+\begin{figure}[htbp] 
+\begin{center}
+\includegraphics[width=1.0\textwidth]{combination2-5}
+\caption{The MAPK signaling pathway graph with KOs as nodes.}\label{combination2-5}
+\end{center}
+\end{figure}
+
+The following commands can get the corresponding undirected graphs, that is, the undirected graphs with KOs as nodes. The function \Rfunction{getNonMetabolicKOKOUGraph} can get all results.
+
+<<combination2-6,fig=TRUE,include=FALSE,prefix=FALSE>>=
+#get the undirected graphs with KOs as nodes
+g6<-simplifyGraph(filterNode(getUGraph(gn),
+nodeType=c("map")),nodeType="geneProduct")
+#visualize
+plotGraph(g6[[1]])
+@
+Figure \ref{combination2-6} shows the result graph of the MAPK signaling pathway. 
+
+\begin{figure}[htbp] 
+\begin{center}
+\includegraphics[width=1.0\textwidth]{combination2-6}
+\caption{The undirected MAPK signaling pathway graph with KOs as nodes.}\label{combination2-6}
+\end{center}
+\end{figure}
+
+The following commands can get graphs with KOs as nodes. And, each node contains only a KO and each KO only appears once in the graph. The function \Rfunction{getNonMetabolicKOKOEMGraph} can get all results.
+
+<<combination2-7,fig=TRUE,include=FALSE,prefix=FALSE>>=
+#get graphs with only KOs as nodes. And, each node contains 
+#only a KO and each KO only appears once in the graph.
+g7<-mergeNode(expandNode(simplifyGraph(filterNode(gn,
+nodeType=c("map")),nodeType="geneProduct")))
+#visualize
+plotGraph(g7[[1]],layout=layout.sphere)
+@
+Figure \ref{combination2-7} shows the result graph of the MAPK signaling pathway. The graph can be treated as the KO-KO (gene product-gene product) network obtained from the the MAPK signaling pathway.
+
+\begin{figure}[htbp] 
+\begin{center}
+\includegraphics[width=1.0\textwidth]{combination2-7}
+\caption{The MAPK signaling pathway graph with KOs as nodes. Moreover, each node contains only a KO and each KO only appears once in the graph. The graph can be treated as the KO-KO (gene product-gene product) network obtained from the MAPK signaling pathway.}\label{combination2-7}
+\end{center}
+\end{figure}
+
+The following commands can get the corresponding undirected graphs. The function \Rfunction{getNonMetabolicKOKOUEMGraph} can get all results.
+
+<<combination2-8,fig=TRUE,include=FALSE,prefix=FALSE>>=
+#get the undirected graphs with only KOs as nodes. And, each node contains 
+#only a KO and each KO only appears once in the graph.
+g8<-mergeNode(expandNode(simplifyGraph(filterNode(gn,
+nodeType=c("map")),nodeType="geneProduct")))
+#visualize
+plotGraph(g8[[1]],layout=layout.sphere)
+@
+Figure \ref{combination2-8} shows the result graph of the MAPK signaling pathway. The graph can be treated as the KO-KO (gene product-gene product) network obtained from the the MAPK signaling pathway.
+
+\begin{figure}[htbp] 
+\begin{center}
+\includegraphics[width=1.0\textwidth]{combination2-8}
+\caption{The undirected MAPK signaling pathway graph with KOs as nodes. Moreover, each node contains only a KO and each KO only appears once in the graph. The graph can be treated as the KO-KO (gene product-gene product) network obtained from the MAPK signaling pathway.}\label{combination2-8}
+\end{center}
+\end{figure}
+
+
+\subsubsection{Example 3: compound-compound pathway graphs}\label{example3}
+
+For metabolic pathways, the following commands can get graphs with compounds as nodes and enzymes as edges. The function \Rfunction{getMetabolicCOCOGraph} with setting the argument \Rfunarg{type} as "EC" can get all metabolic pathway graphs with compounds as nodes and enzymes as edges. 
+
+<<combination3-1,fig=TRUE,include=FALSE,prefix=FALSE>>=
+#The graph with compounds as nodes and enzymes as edges
+g1<-simplifyGraph(filterNode(gm,nodeType=c("map")),nodeType="compound")
+#visualize
+plotGraph(g1[[1]])
+@
+Figure \ref{combination3-1} shows the result graph of the Glycolysis / Gluconeogenesis pathway. 
+
+\begin{figure}[htbp]
+\begin{center}
+\includegraphics[width=1.0\textwidth]{combination3-1}
+\caption{The Glycolysis / Gluconeogenesis pathway graph with compounds as nodes and enzymes as edges.}\label{combination3-1}
+\end{center}
+\end{figure}
+
+The following commands can get the undirected graphs with compounds as nodes and enzymes as edges. The function \Rfunction{getMetabolicCOCOUGraph} with setting the argument \Rfunarg{type} as "EC" can get all results. 
+
+<<combination3-2,fig=TRUE,include=FALSE,prefix=FALSE>>=
+#The undirected graph with compounds as nodes and enzymes as edges
+g2<-simplifyGraph(filterNode(getUGraph(gm),nodeType=c("map")),nodeType="compound")
+#visualize
+plotGraph(g2[[1]])
+@
+Figure \ref{combination3-2} shows the result graph of the Glycolysis / Gluconeogenesis pathway. 
+
+\begin{figure}[htbp]
+\begin{center}
+\includegraphics[width=1.0\textwidth]{combination3-2}
+\caption{The undirected Glycolysis / Gluconeogenesis pathway graph with compounds as nodes and enzymes as edges.}\label{combination3-2}
+\end{center}
+\end{figure}
+
+The following commands can get graphs with compounds as nodes and enzymes as edges. Each node only contains a compound and each compound only appears once in the graph. The function \Rfunction{getMetabolicCOCOEMGraph} with setting the argument \Rfunarg{type} as "EC" can get all results. 
+
+<<combination3-3,fig=TRUE,include=FALSE,prefix=FALSE>>=
+#The graph with compounds as nodes and enzymes as edges
+#Each node only contains a compound and each compound only appears once in the graph.
+g3<-mergeNode(expandNode(simplifyGraph(filterNode(gm,
+nodeType=c("map")),nodeType="compound")))
+#visualize
+plotGraph(g3[[1]])
+@
+Figure \ref{combination3-3} shows the result graph of the Glycolysis / Gluconeogenesis pathway. Each node only contains a compound and each compound only appears once in the graph. The graph can be treated as the compound-compound network obtained from the Glycolysis / Gluconeogenesis pathway.
+
+\begin{figure}[htbp]
+\begin{center}
+\includegraphics[width=1.0\textwidth]{combination3-3}
+\caption{The Glycolysis / Gluconeogenesis pathway graph with compounds as nodes and enzymes as edges. The graph can be treated as the compound-compound network obtained from the Glycolysis / Gluconeogenesis pathway.}\label{combination3-3}
+\end{center}
+\end{figure}
+
+The following commands can get the undirected graphs with compounds as nodes and enzymes as edges. Each node only contains a compound and each compound only appears once in the graph. The function \Rfunction{getMetabolicCOCOUEMGraph} with setting the argument \Rfunarg{type} as "EC" can get all results. 
+
+<<combination3-4,fig=TRUE,include=FALSE,prefix=FALSE>>=
+#The undirected graph with compounds as nodes and enzymes as edges
+#Each node only contains a compound and each compound only appears once in the graph.
+g4<-mergeNode(expandNode(simplifyGraph(filterNode(getUGraph(gm),
+nodeType=c("map")),nodeType="compound")))
+#visualize
+plotGraph(g4[[1]])
+@
+Figure \ref{combination3-4} shows the result graph of the Glycolysis / Gluconeogenesis pathway. The graph can be treated as the compound-compound network obtained from the Glycolysis / Gluconeogenesis pathway.
+
+\begin{figure}[htbp]
+\begin{center}
+\includegraphics[width=1.0\textwidth]{combination3-4}
+\caption{The undirected Glycolysis / Gluconeogenesis pathway graph with compounds as nodes and enzymes as edges. Each node only contains a compound and each compound only appears once in the graph. The graph can be treated as the compound-compound network obtained from the Glycolysis / Gluconeogenesis pathway.}\label{combination3-4}
+\end{center}
+\end{figure}
+
+Note that Figure \ref{combination3-3} and \ref{combination3-4} are not changed compared with Figure \ref{combination3-1} and \ref{combination3-2}. This is bacause each compound node in the original Glycolysis / Gluconeogenesis pathway only contains a compound and each compound only appears once in the graph.
+
+\subsubsection{Example 4: organism-specific gene-gene pathway graphs}\label{example4}
+
+For metabolic pathways, the following commands can get graphs with organism-specific genes as nodes and compounds as edges. And, each node contains only a gene and each gene only appears once in the graph. The function \Rfunction{getMetabolicGEGEEMGraph} with setting the argument \Rfunarg{type} as "EC" can get all metabolic pathway graphs with organism-specific genes as nodes and compounds as edges.
+
+<<combination4-1,fig=TRUE,include=FALSE,prefix=FALSE>>=
+#get graphs with organism-specific genes as nodes and compounds as edges
+g1<-mergeNode(expandNode(simplifyGraph(filterNode(mapNode(gm),
+nodeType=c("map","enzyme")),nodeType="geneProduct")))
+#visualize
+plotGraph(g1[[1]],layout=layout.sphere)
+@
+Figure \ref{combination4-1} shows the result graph of the Glycolysis / Gluconeogenesis pathway. Because the default orgnaism is human and idType is ncbi-geneid, the result graph is the graph of the human Glycolysis / Gluconeogenesis pathway with ncbi-geneid nodes. The graph can be considered as human gene-gene network obtained from the Glycolysis / Gluconeogenesis pathway.
+
+\begin{figure}[htbp] 
+\begin{center}
+\includegraphics[width=1.0\textwidth]{combination4-1}
+\caption{The human Glycolysis / Gluconeogenesis pathway graph with genes as nodes and compounds as edges. And, each node contains only a gene (ncbi-geneid) and each gene only appears once in the graph. The graph can be considered as human gene-gene network obtained from the Glycolysis / Gluconeogenesis pathway.}\label{combination4-1}
+\end{center}
+\end{figure}
+
+The following commands can get the corresponding undirected graphs. The function \Rfunction{getMetabolicGEGEEMUGraph} with setting the argument \Rfunarg{type} as "EC" can get all results.
+
+<<combination4-2,fig=TRUE,include=FALSE,prefix=FALSE>>=
+#get the undirected graphs with organism-specific genes as nodes and compounds as edges
+g2<-mergeNode(expandNode(simplifyGraph(filterNode(mapNode(getUGraph(gm)),
+nodeType=c("map","enzyme")),nodeType="geneProduct")))
+#visualize
+plotGraph(g2[[1]],layout=layout.sphere)
+@
+Figure \ref{combination4-2} shows the result graph of the Glycolysis / Gluconeogenesis pathway. 
+
+\begin{figure}[htbp] 
+\begin{center}
+\includegraphics[width=1.0\textwidth]{combination4-2}
+\caption{The undirected human Glycolysis / Gluconeogenesis pathway graph with genes as nodes and compounds as edges. Moreover, each node contains only a gene (ncbi-geneid) and each gene only appears once in the graph. The graph can be considered as human gene-gene network obtained from the Glycolysis / Gluconeogenesis pathway.}\label{combination4-2}
+\end{center}
+\end{figure}
+
+For non-metabolic pathways, the following commands can get graphs with organism-specific genes as nodes and compounds as edges. Moreover, each node contains only a gene and each gene only appears once in the graph. The function \Rfunction{getNonMetabolicGEGEEMGraph} can get all results.
+
+<<combination4-3,fig=TRUE,include=FALSE,prefix=FALSE>>=
+#get graphs with organism-specific genes as nodes
+g3<-mergeNode(expandNode(simplifyGraph(filterNode(mapNode(gn),
+nodeType=c("map","ortholog")),nodeType="geneProduct")))
+#visualize
+plotGraph(g3[[1]],layout=layout.sphere)
+@
+Figure \ref{combination4-3} shows the result graph of the MAPK signaling pathway. 
+
+\begin{figure}[htbp] 
+\begin{center}
+\includegraphics[width=1.0\textwidth]{combination4-3}
+\caption{The human MAPK signaling pathway graph with genes as nodes and compounds as edges. Moreover, each node contains only a gene (ncbi-geneid) and each gene only appears once in the graph. The graph can be considered as human gene-gene network obtained from the MAPK signaling pathway.}\label{combination4-3}
+\end{center}
+\end{figure}
+
+The following commands can get the corresponding undirected graphs. The function \Rfunction{getNonMetabolicGEGEUEMGraph} can get all results.
+
+<<combination4-4,fig=TRUE,include=FALSE,prefix=FALSE>>=
+#get the undirected graphs with organism-specific genes as nodes
+g4<-mergeNode(expandNode(simplifyGraph(filterNode(mapNode(gn),
+nodeType=c("map","ortholog")),nodeType="geneProduct")))
+#visualize
+plotGraph(g4[[1]],layout=layout.sphere)
+@
+Figure \ref{combination4-4} shows the result graph of the MAPK signaling pathway. 
+
+\begin{figure}[htbp] 
+\begin{center}
+\includegraphics[width=1.0\textwidth]{combination4-4}
+\caption{The undirected human MAPK signaling pathway graph with genes as nodes and compounds as edges. Moreover, each node contains only a gene (ncbi-geneid) and each gene only appears once in the graph. The graph can be considered as human gene-gene network obtained from the MAPK signaling pathway.}\label{combination4-4}
+\end{center}
+\end{figure}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+\section{Methods to analyze pathway graphs}\label{Methods}
+Pathway analyses have become invaluable aids to understanding the interesting sets generated from technologies of "omics". Most of pathway analysis tools were developed for analysis of genomic or proteomic data. Metabolomics is a rapidly-growing field of 'omics' science. Typically hundreds to thousands of compounds can be identified in a typical high throughput metabolomic assay. With the rapid development of this field, there is an increasing demand for software tools that support pathway analyses of metabolomic data. More importantly, it is useful for the pathway analysis tools to support pathway analysis based on not only gene/protein sets, but also metabolite sets, even their combined sets. 
+
+Since pathways can be converted to graphs, many analyses based on graph model are available. For example, we can get subgraph, degree, shortest path, etc. The section will detailedly introduce the methods of graph-based pathway analyses. We firstly introduce some basic operation of graphs. Secondly, we mainly introduce pathway analyses based on cellular component sets, including both the topology-based pathway analysis (see the section \ref{TopoSection}) and the annotation and identification of entire pathways and subpathways (see the section \ref{annEntire} and \ref{annSub}). The system can provide topology-based pathway analysis of gene sets (see the section \ref{TopoGeneSection}), compound sets (see the section \ref{TopoCompoundSection}), and the combined sets of genes and compounds (see the section \ref{TopoGeneCompoundSection}). The current available topological properties contain degree, local clustering coefficient, and betweenness. Topological significance of pathways can be also evaluated by the system. The system can support the annotation and identification of pathways based on gene sets (see the section \ref{annEntireGene} and \ref{annSub2Gene}), compound sets (see the section \ref{annEntireCompound} and \ref{annSub2Compound}), and even the combined sets of genes and compounds (see the section \ref{annEntireCompoundGene} and \ref{annSub2CompoundGene}). The identification methods of the entire pathways (see the section \ref{annEntire}) and subpathways (see the section \ref{annSub}) are available for these sets. Taken together, the total of six strategies of pathway identifications can be supported by our system. 
+
+\subsection{The basic analyses based on graph model}
+
+Since pathways are able to be converted to different types of graphs, many analyses based on graph model are available by using the functions provided in the \Rpackage{igraph} package. For example, we can get subgraph, degree, shortest path, etc \cite{Csardi2006}. Here, we will give some detailed examples of operating graphs, nodes, edges, attributes. To do these, we firstly construct pathway graphs as the example graphs of the basic analyses based on graph model. The commands are as follows:
+
+We can get metabolic pathway graphs as follows:
+<<>>=
+#get path of KGML files
+path<-paste(system.file(package="iSubpathwayMiner"),
+"/localdata/kgml/metabolic/ec/",sep="")
+#convert metabolic pathways to graphs with "map" node deleted
+gmf<-filterNode(getMetabolicGraph(getPathway(path,c("ec00010.xml"))))
+#show title of pathway graphs
+sapply(gmf,function(x) x$title)
+#convert metablic pathways to graphs with enzymes as nodes and compounds as edges
+gmfs<-simplifyGraph(gmf,nodeType="geneProduct")
+@
+
+Figure \ref{baseGraph2} displays gmfs[[1]]. It is the Glycolysis / Gluconeogenesis pathway graph with enzymes as nodes and compounds as edges. The "map" nodes are deleted. 
+<<baseGraph2,fig=TRUE,echo=FALSE,include=FALSE,prefix=FALSE>>=
+#visualize annotated graph
+plotGraph(gmfs[[1]])
+@
+
+\begin{figure}[htbp] 
+\begin{center}
+\includegraphics[width=1.0\textwidth]{baseGraph2}
+\caption{The Glycolysis / Gluconeogenesis pathway graph with enzymes as nodes and compounds as edges. The "map" nodes are deleted. The graph is stored in the variable gmfs[[1]].}\label{baseGraph2}
+\end{center}
+\end{figure}
+
+\subsubsection{Node methods: degree, betweenness, local clustering coefficient, etc.}
+
+Degree (or connectivity) of a node is defined as the number of its adjacent edges \cite{Csardi2006,Barabasi2004,Huber2007}. It is a local quantitative measure of a node relative to other nodes. The following commands can get the degree of the first node in the graph.
+<<>>=
+#get degree of nodes
+igraph::degree(gmfs[[1]],0)
+@
+We can see names of the first node as follows:
+<<>>=
+#see name of the first node
+V(gmfs[[1]])[0]$names
+@
+The first node is the enzyme "ec:4.1.2.13" and is at the right-top part of Figure \ref{baseGraph2}.
+
+We can identify enzyme "ec:4.1.2.13" and get degree of a node with given names as follows:
+<<>>=
+#get indexes of nodes
+index1<-V(gmfs[[1]])[V(gmfs[[1]])$names=="ec:4.1.2.13"]
+#get degree of node
+igraph::degree(gmfs[[1]],index1)
+@
+
+The argument \Rfunarg{mode} can control which type of degree should be obtained. The "out" for out-degree, "in" for in-degree or "total" for the sum of the two. For undirected graphs, this argument is ignored. The following commands get in-degree and out-degree of the enzyme "ec:4.1.2.13".
+<<>>=
+#in-degree
+igraph::degree(gmfs[[1]],index1,mode="in")
+#out-degree
+igraph::degree(gmfs[[1]],index1,mode="out")
+@
+
+We may also want to calculate its betweeness, which is (roughly) defined by the number of shortest paths going through a node \cite{Csardi2006,Barabasi2004,Huber2007}.
+
+<<>>=
+#Calculate betweenness of enzyme "ec:4.1.2.13".
+betweenness(gmfs[[1]],index1)
+@
+
+The local clustering coefficient measures the probability that the adjacent nodes of a node are connected.  
+
+<<>>=
+#Calculate the clustering coefficient of enzyme "ec:4.1.2.13".
+igraph::transitivity(gmfs[[1]],type="local",vids=index1)
+@
+
+Closeness centrality measures how many steps is required to access every other node from a given node.
+
+
+<<>>=
+#Calculate the Closeness centrality of enzyme "ec:4.1.2.13".
+closeness(gmfs[[1]],v=index1, mode = "all")
+closeness(gmfs[[1]],v=index1, mode = "in")
+closeness(gmfs[[1]],v=index1, mode = "out")
+@
+
+
+\subsubsection{Edge method: shortest paths}
+
+The following commands can get the shortest path between the first node and the second node \cite{Csardi2006,Barabasi2004,Huber2007}.
+<<>>=
+#get the shortest path
+shortest.path<-get.shortest.paths(gmf[[1]],0,1,mode="out")
+@
+We can see name of nodes as follows:
+<<>>=
+#see name of the first and second nodes
+V(gmf[[1]])[0:1]$names
+#see name of nodes in the shortest path
+V(gmf[[1]])[shortest.path[[1]]]$names
+@
+
+
+We sometimes may want to get the shortest path between two enzymes in a pathway, i.e., the shortest path between enzyme "ec:4.1.2.13" and "ec:1.2.1.3" in the Glycolysis / Gluconeogenesis pathway. To do this, we need to get indexes of interesting nodes and then use the function \Rfunction{get.shortest.paths} to get the result. The above strategy is usually necessary because in the \Rpackage{igraph} package, node indexes is used as input of most of functions. The following commands can calculate the shortest path between enzyme "ec:4.1.2.13" and "ec:1.2.1.3" in the Glycolysis / Gluconeogenesis pathway.
+
+<<>>=
+#get indexes of nodes
+index1<-V(gmf[[1]])[V(gmf[[1]])$names=="ec:4.1.2.13"]
+index2<-V(gmf[[1]])[V(gmf[[1]])$names=="ec:1.2.1.3"]
+#get shortest path
+shortest.path<-get.shortest.paths(gmf[[1]],index1,index2)
+#display shortest path
+shortest.path
+#convert indexs to names
+V(gmf[[1]])[shortest.path[[1]]]$names
+@
+
+\subsubsection{Graph method: degree distribution, diameter, global clustering coefficient, density, module, etc.}
+
+The following command can get degree distribution of a pathway graph \cite{Csardi2006,Barabasi2004,Huber2007}. 
+<<>>=
+#degree distribution.
+degree.distribution<-degree.distribution(gmfs[[1]])
+@
+
+The diameter of a pathway graph is the length of the longest geodesic \cite{Csardi2006}.
+<<>>=
+#get diameter
+diameter(gmfs[[1]])
+@
+
+The following command can get the global clustering coefficient \cite{Csardi2006}.  
+<<>>=
+#Calculate the clustering coefficient.
+igraph::transitivity(gmfs[[1]])
+@
+
+The following command can get density of a pathway graph. The density of a graph is the ratio of the number of edges and the number of possible edges \cite{Csardi2006}.
+<<>>=
+#Calculate the density.
+graph.density(gmfs[[1]])
+@
+
+The following commands can find densely connected subgraphs (modules or communities) in a pathway graph. We use walktrap community finding algorithm in the \Rpackage{igraph} package to find modules in the graph via random walks \cite{Csardi2006}. Short random walks tend to stay in the same module.
+<<>>=
+#find modules.
+wtc <- walktrap.community(gmfs[[1]])
+module<-community.to.membership(gmfs[[1]], wtc$merges, steps=53)
+module
+@
+The result shows that three modules are found. They contain 20, 25, and 11 nodes respectively. We can also see names of nodes in the first module as follows:
+<<>>=
+V(gmfs[[1]])[module$membership==0]$names
+@
+
+We can display these modules. The result graph is shown in Figure \ref{module}. The three modules are colored red, green, and yellow respectively.
+
+<<module, fig=TRUE, include=FALSE, prefix=FALSE>>=
+vertex.color<-module$membership
+vertex.color<-replace(vertex.color,which(vertex.color==0),"red")
+vertex.color<-replace(vertex.color,which(vertex.color==1),"green")
+vertex.color<-replace(vertex.color,which(vertex.color==2),"yellow")
+plotGraph(gmfs[[1]],vertex.color=vertex.color)
+@
+
+\begin{figure}[htbp]
+\begin{center}  
+\includegraphics[width=1.0\textwidth]{module}
+\caption{We use walktrap community finding algorithm in the \Rpackage{igraph} package to find three modules in the the Glycolysis / Gluconeogenesis pathway via random walks. The three modules is colored red, green, and yellow respectively.}\label{module}
+\end{center}
+\end{figure}
+
+This function \Rfunction{modularity} can calculate how modular is a given division of a graph into modules. 
+<<>>=
+modularity(gmfs[[1]], module$membership)
+@
+
+\subsection{Topology-based pathway analysis of cellular component sets}\label{TopoSection}
+The section mainly introduces topology-based pathway analysis of cellular component sets. Currently, our system can support input of three kinds of cellular component sets: gene sets, compound (metabolite) sets, and gene and compound sets at the same time. Therefore, the system can provide topology-based pathway analysis of gene sets (see the section \ref{TopoGeneSection}), compound sets (see the section \ref{TopoCompoundSection}), and the combined sets of genes and compounds (see the section \ref{TopoGeneCompoundSection}). Topological significance of pathways can be also evaluated by the system. For example, if users input a set of interesting genes, the set can be mapped onto pathways. The topological property values can then be calculated. The topological significance of pathways can be evaluated. The available topological properties contain degree, clustering coefficient, betweenness, and closeness \cite{Csardi2006,Barabasi2004,Huber2007}. Degree of a node is the number of its adjacent edges. Local clustering coefficient quantifies the probability that the neighbours of a node are connected. Node betweenness can be calculated based on the number of shortest path passing through a given node. Closeness measures how many steps is required to access every other nodes from a given node. 
+
+\subsubsection{Topology-based pathway analysis of gene sets}\label{TopoGeneSection}
+
+The function \Rfunction{identifyTopo} in the \Rpackage{iSubpathwayMiner} package facilitates topology-based pathway analysis of gene sets. We need to set the value of the argument \Rfunarg{type} of the function as "gene". Moreover, we need to set the argument \Rfunarg{propertyName} as a specific property (e.g., "degree"). 
+
+To do topology-based pathway analysis of gene sets, we firstly construct a list of pathway graphs. We secondly input the interesting gene set and the list of pathway graphs to the function \Rfunction{identifyTopo}. The function can map interesting gene sets onto each pathway. For the mapped genes in a pathway, their topological property values can be calculated. These values can be compared with property values of all genes in the pathway. Finally, the statistical significance can be calculated using wilcoxon rank sum test. 
+
+The return value of the function \Rfunction{identifyTopo} is a list. Each element of the list is another list. It includes following elements: 'pathwayId', 'pathwayName', 'annComponentList', 'annComponentNumber', 'annBgComponentList', 'annBgNumber', 'ComponentNumber', 'bgNumber', 'propertyName', 'annComponentPropertyValueList', 'propertyValue', 'annBgComponentPropertyValueList', 'bgPropertyValue', 'pvalue', 'qvalue', and 'lfdr'. They correspond to pathway identifier, pathway name, the submitted components annotated to a pathway, numbers of submitted components annotated to a pathway, the background components annotated to a pathway, numbers of background components annotated to a pathway, numbers of submitted components, numbers of background components, topological property name (e.g., 'degree'), topological property values of submitted components annotated to a pathway, average topological property values of submitted components annotated to a pathway, topological property values of the background components annotated to a pathway, average topological property values of the background components annotated to a pathway, p-value of wilcoxon rank sum test for 'annComponentPropertyValueList' and 'annBgComponentPropertyValueList', q-values (Fdr), and local fdr values. The list of results returned from the function \Rfunction{identifyTopo} can also be converted to \Robject{data.frame} using the function \Rfunction{printTopo}. 
+
+The following commands can perform topology-based pathway analysis of gene sets. The list of pathway graphs is obtained from the function \Rfunction{getMetabolicECECGraph}, which can get all directed metabolic pathway graphs with enzymes as nodes and compounds as edges (see the section \ref{example2} and Figure \ref{combination2-1}).
+<<>>=
+#get pathway graphs with enzymes as nodes.
+graphList<-getMetabolicECECGraph()
+#get a set of genes
+geneList<-getExample(geneNumber=1000,compoundNumber=0)
+#topology-based pathway analysis
+ann<-identifyTopo(geneList,graphList,type="gene",propertyName="degree")
+result<-printTopo(ann)
+#print a part of the result
+result[1:5,]
+@
+
+The each row of the result (data.frame) is a pathway. Columns include pathwayId, pathwayName, annComponentRatio, annBgRatio, propertyName, propertyValue, bgPropertyValue, pvalue, qvalue, lfdr. The \Rfunarg{annComponentRatio} is the ratio of the annotated components. For example, 30/1000 means that 30 components in 1000 components are annotated. The \Rfunarg{propertyValue} is average topological property value of submitted components annotated to a pathway. The \Rfunarg{bgPropertyValue} is average topological property value of the background components annotated to a pathway. When many correlated pathways are considered, a false positive discovery rate is likely to result. We provide q-values (Fdr) and local fdr values for reducing the false positive discovery rate \cite{Strimmer2008}. Because the result is a \Robject{data.frame}, we are able to use the function \Rfunction{write.table} to export the result to a tab delimited file. If setting the argument \Rfunarg{detail} as TRUE, we can also get more detailed result. For example, the topological property values of submitted genes annotated to a pathway can be exported using ";" as separator.
+
+\begin{Schunk}
+\begin{Sinput}
+> ##write the results to tab delimited file. 
+> write.table(result,file="result.txt",row.names=FALSE,sep="\t")
+>
+> #detailed information is also outputed
+> result1<-printTopo(ann,detail=TRUE)
+> ##write the results to tab delimited file. 
+> write.table(result1,file="result1.txt",row.names=FALSE,sep="\t")
+\end{Sinput}
+\end{Schunk}
+
+
+
+The following command displays a part of the return result list of the function \Rfunction{identifyTopo}, which is the analysis result of first pathway. 
+<<>>=
+#list of the result
+ann[1]
+@
+The result is a list. It includes the following elements: 'pathwayId', 'pathwayName', 'annComponentList', 'annComponentNumber', 'annBgComponentList', 'annBgNumber', 'ComponentNumber', 'bgNumber', 'propertyName', 'annComponentPropertyValueList', 'propertyValue', 'annBgComponentPropertyValueList', 'bgPropertyValue', 'pvalue', 'qvalue', and 'lfdr'. The list is more flexible to store and extract the detailed analysis result of pathways. 
+
+The result of topology-based anlysis shows that the degrees of the interesting genes in the inositol phosphate metabolism graph (path:00562) are significantly high. This suggests that these genes may play a more important role in the pathway. We can visualize the pathway using the function \Rfunction{plotAnnGraph}.
+
+<<TopologyPlotAnnGraphGene, fig=TRUE, include=FALSE, prefix=FALSE>>=
+#visualize
+plotAnnGraph("path:00562",graphList,ann)
+@
+The result pathway graph is shown in Figure \ref{TopologyPlotAnnGraphGene}. The mapped nodes, which correspond to the interesting genes, are colored red. From the figure, we can also see that degrees of these nodes are higher than the average degrees in the pathway.
+
+\begin{figure}[htbp]
+\begin{center}  
+\includegraphics[width=1.0\textwidth]{TopologyPlotAnnGraphGene}
+\caption{The inositol phosphate metabolism (path:00562) graph with enzymes as nodes and compounds as edges. The mapped nodes are colored red. We can see that degrees of these nodes are higher than the average degrees in the pathway.}\label{TopologyPlotAnnGraphGene}
+\end{center}
+\end{figure}
+
+
+
+
+
+For above directed pathway graphs, we can calculate "out" degree of gene sets in pathways, which represents ability of regulating other genes in pathways.
+<<>>=
+ann<-identifyTopo(geneList,graphList,type="gene",
+propertyName="degree",degree.mode="out")
+result<-printTopo(ann)
+@
+
+The function \Rfunction{identifyTopo} is flexible. Users can change pathway graphs for different topological analyses. The following commands can use the function \Rfunction{getMetabolicGEGEUEMGraph} (see the section \ref{example4} and \ref{combination4-2}) to generate pathway graphs with genes as nodes, where each node contains only a gene and each gene only appears once. We can then use the data to analyze topological properties of gene sets in pathways. The following commands analyze local clustering coefficients of gene sets.
+<<>>=
+#get undirected pathway graphs with genes as nodes.
+graphList<-getMetabolicGEGEUEMGraph(type="EC")
+#get a set of genes
+geneList<-getExample(geneNumber=1000,compoundNumber=0)
+#topology-based pathway analysis
+ann<-identifyTopo(geneList,graphList,type="gene",propertyName="clusteringCoefficient")
+result<-printTopo(ann)
+#print a part of the result
+result[1:10,c(1,3,6:8)]
+@
+The result shows that the local clustering coefficients of the interesting genes in the Glycolysis / Gluconeogenesis pathway (path:00562) are significantly high. This suggests that these genes tend to be in the functional module of the pathway. The local clustering coefficient measures the probability that the adjacent nodes of a node are connected \cite{Csardi2006,Barabasi2004,Huber2007}. We visualize the pathway using the function \Rfunction{plotAnnGraph}.
+
+<<TopologyPlotAnnGraphGeneEM, fig=TRUE, include=FALSE, prefix=FALSE>>=
+#visualize
+plotAnnGraph("path:00010",graphList,ann,layout=layout.fruchterman.reingold)
+@
+The result graph is shown in Figure \ref{TopologyPlotAnnGraphGeneEM}. The mapped genes are colored red. We find that the interesting genes in the Glycolysis / Gluconeogenesis pathway is highly clustered together.
+
+\begin{figure}[htbp]
+\begin{center}  
+\includegraphics[width=1.0\textwidth]{TopologyPlotAnnGraphGeneEM}
+\caption{The Glycolysis / Gluconeogenesis pathway (path:00010) graph with genes as nodes, where each node contains only a gene and each gene only appears once. The mapped genes are colored red. The local clustering coefficients of these genes are significantly high.}\label{TopologyPlotAnnGraphGeneEM}
+\end{center}
+\end{figure}
+
+
+\subsubsection{Topology-based pathway analysis of compound sets}\label{TopoCompoundSection}
+The following commands can do topology-based (betweenness) pathway analysis of compound sets. We need to set the argument \Rfunarg{type} of the function \Rfunction{identifyTopo} as "compound". The list of pathway graphs is obtained from the function \Rfunction{getMetabolicCOCOGraph}, which can get all directed metabolic pathway graphs with compounds as nodes and enzymes as edges (see the section \ref{example3} and Figure \ref{combination3-1}).
+<<>>=
+#get metabolic pathway graphs with compounds as nodes. 
+graphList<-getMetabolicCOCOGraph()
+#get a set of compounds
+compoundList<-getExample(geneNumber=0,compoundNumber=100)
+#topology-based pathway analysis
+ann<-identifyTopo(compoundList,graphList,type="compound",
+propertyName="betweenness")
+#data.frame
+result<-printTopo(ann)
+#print a part of the result
+result[1:10,c(1,3,6:8)]
+@
+The result shows that the betweenness of the interesting compounds in the fructose and mannose metabolism (path:00562) is significantly high. This suggests that many compounds in the pathway may need to pass through these compounds for performing the biological functions. The betweenness is (roughly) defined by the number of shortest paths going through a node \cite{Csardi2006,Barabasi2004,Huber2007}. The following command displays the pathway. The result graph is shown in Figure \ref{TopologyPlotAnnGraphCompound}.
+
+<<TopologyPlotAnnGraphCompound, fig=TRUE, include=FALSE, prefix=FALSE>>=
+#visualize
+plotAnnGraph("path:00051",graphList,ann)
+@
+
+
+\begin{figure}[htbp]
+\begin{center}  
+\includegraphics[width=1.0\textwidth]{TopologyPlotAnnGraphCompound}
+\caption{The fructose and mannose metabolism (path:00051). The mapped compounds are colored red. The betweenness of these compounds is significantly high.}\label{TopologyPlotAnnGraphCompound}
+\end{center}
+\end{figure}
+
+\subsubsection{Topology-based pathway analysis of gene and compound sets}\label{TopoGeneCompoundSection}
+
+The following commands can do topology-based (betweenness) pathway analysis of gene and compound sets. The list of pathway graphs is obtained from the function \Rfunction{getMetabolicECCOGraph}, which can get all directed metabolic pathway graphs with enzymes and compounds as nodes (see the section \ref{example1} and Figure \ref{combination1-1}).
+<<>>=
+#get metabolic pathway graphs with enzymes and compounds as nodes. 
+graphList<-getMetabolicECCOGraph()
+#get a set of genes
+componentList<-getExample(geneNumber=1000,compoundNumber=100)
+#topology-based pathway analysis
+ann<-identifyTopo(componentList,graphList,type="gene_compound",
+propertyName="betweenness")
+#data.frame
+result<-printTopo(ann)
+#print a part of the result
+result[1:10,c(1,3,6:8)]
+@
+
+The results show that betweenness of the nodes mapped by genes and compounds in the Glycolysis / Gluconeogenesis pathway (path:00010) is significantly low. This suggests that these genes and compounds may be located in the functionally and topologically peripheral region of the Glycolysis / Gluconeogenesis pathway. We can visualize the result pathways using the function \Rfunction{plotAnnGraph}. The following command displays the Glycolysis / Gluconeogenesis pathway (path:00010). The mapped nodes are colored red. 
+
+<<TopologyPlotAnnGraphGeneCompound, fig=TRUE, include=FALSE, prefix=FALSE>>=
+#visualize
+plotAnnGraph("path:00010",graphList,ann)
+@
+The result graph is shown in Figure \ref{TopologyPlotAnnGraphGeneCompound}. From Figure \ref{TopologyPlotAnnGraphGeneCompound} and \ref{linkec00010}, we found that these mapped genes and compounds were located in the ethanol and pyrurate metablism, which is the downstream of the Glycolysis / Gluconeogenesis pathway in KEGG pathway.
+
+\begin{figure}[htbp]
+\begin{center}  
+\includegraphics[width=1.0\textwidth]{TopologyPlotAnnGraphGeneCompound}
+\caption{The Glycolysis / Gluconeogenesis pathway (path:00010) graph with enzymes and compounds as nodes. The mapped nodes are colored red. The betweenness of these nodes is significantly low.}\label{TopologyPlotAnnGraphGeneCompound}
+\end{center}
+\end{figure}
+
+\subsection{Annotate cellular component sets and identify entire pathways}\label{annEntire}
+
+The section mainly introduces the annotation and identification of entire pathways. Currently, our system can support input of three kinds of cellular component sets: gene sets, compound (metabolite) sets, and gene and compound sets at the same time. Therefore, our system can support the annotation and identification of pathways based on gene sets (see the section \ref{annEntireGene}), compound sets (see the section \ref{annEntireCompound}), and gene and compound sets (see the section \ref{annEntireCompoundGene}). For example, if users have interesting gene sets and interesting compound sets, the combined set of compounds and genes can be annotated at the same time to pathways. The enrichment significance of pathways can be evaluated based on the combined set. 
+
+\subsubsection{Annotate gene sets and identify entire pathways}\label{annEntireGene}
+The function \Rfunction{identifyGraph} in the \Rpackage{iSubpathwayMiner} package facilitates the annotation and identification of entire pathways. Firstly, we need to construct a list of pathway graphs. We then input the interesting gene set and the list of pathway graphs to the function \Rfunction{identifyGraph}. Through performing the function, the interesting gene set can be annotated to pathway graphs. Finally, the enrichment significance of pathways can be evaluated using hypergeometric test. 
+
+The return value of the function \Rfunction{identifyGraph} is a list of the annotated information. Each element of the list is another list. It includes the following elements: 'pathwayId', 'pathwayName', 'annComponentList', 'annComponentNumber', 'annBgComponentList', 'annBgNumber', 'ComponentNumber', 'bgNumber', 'pvalue', 'qvalue', and 'lfdr'. They correspond to pathway identifier, pathway name, the submitted components annotated to a pathway, numbers of submitted components annotated to a pathway, the background components annotated to a pathway, numbers of background components annotated to a pathway, numbers of submitted components, numbers of background components, p-value of the hypergeometric test, q-values (Fdr), and local fdr values. The list of results returned from the function \Rfunction{identifyGraph} can also be converted to \Robject{data.frame} using the function \Rfunction{printGraph}. 
+
+The following commands annotate a gene set to metabolic pathways and identify significantly enriched metabolic pathways.
+<<>>=
+##Convert all metabolic pathways to graphs.
+metabolicEC<-get("metabolicEC",envir=k2ri)
+graphList<-getMetabolicGraph(metabolicEC)
+@
+
+<<>>=
+##get a set of genes
+geneList<-getExample(geneNumber=1000)
+#annotate gene sets to pathway graphs 
+#and identify significant pathway graphs
+ann<-identifyGraph(geneList,graphList)
+#convert ann to data.frame
+result<-printGraph(ann)
+#print a part of the results to screen
+result[1:10,]
+@
+Each row of the result (data.frame) is a pathway. Its columns include pathwayId, pathwayName, annComponentRatio, annBgRatio, pvalue, qvalue, lfdr. The \Robject{annComponentRatio} is the ratio of the annotated components. For example, 30/1000 means that 30 components in 1000 components are annotated to the pathway. When many correlated pathways are considered, a false positive discovery rate is likely to result. We provide q-values (Fdr) and local fdr values for reducing the false positive discovery rate \cite{Strimmer2008}. Because the result is a \Robject{data.frame}, it is able to use the function \Rfunction{write.table} to export the result to a tab delimited file. If setting the argument \Rfunarg{detail} as TRUE, we can also get more detailed result. For example, the annotated components and the annotated background components can be exported using ";" as separator.
+
+
+\begin{Schunk}
+\begin{Sinput}
+> ##write the annotation results to tab delimited file. 
+> write.table(result,file="result.txt",row.names=FALSE,sep="\t")
+>
+> #detailed information is also outputed
+> result1<-printGraph(ann,detail=TRUE)
+> ##write the annotation results to tab delimited file. 
+> write.table(result1,file="result1.txt",row.names=FALSE,sep="\t")
+\end{Sinput}
+\end{Schunk}
+
+
+The following command displays a part of the return result of the function \Rfunction{identifyGraph}. 
+<<>>=
+#list of the result
+ann[1]
+@
+The result is a list. It includes the following elements: 'pathwayId', 'pathwayName', 'annComponentList', 'annComponentNumber', 'annBgComponentList', 'annBgNumber', 'ComponentNumber', 'bgNumber', 'pvalue', 'qvalue', and 'lfdr'. 
+
+The Glycolysis / Gluconeogenesis pathway (path:00010) is significant in the analysis result of pathway. We can see the identified result of the pathway as follows:
+<<>>=
+result[result[,1] %in% "path:00010",]
+@
+This means that the submitted interesting genes are significantly enriched to the Glycolysis / Gluconeogenesis pathway. If these genes is disease-related genes (e.g., risk genes associated with lung cancer), the Glycolysis / Gluconeogenesis pathway may be highly associted with the disease.
+
+We can visualize the annotated pathways using the function \Rfunction{plotAnnGraph}. The following command displays the Glycolysis / Gluconeogenesis pathway (path:00010). The enzymes identified in the submitted genes are colored red. 
+
+<<entirePlotAnnGraphGene, fig=TRUE, include=FALSE, prefix=FALSE>>=
+#visualize
+plotAnnGraph("path:00010",graphList,ann)
+@
+The result graph is shown in Figure \ref{entirePlotAnnGraphGene}. The red nodes in the result graph represent the enzymes which include the submitted genes. 
+
+\begin{figure}[htbp]
+\begin{center}  
+\includegraphics[width=1.0\textwidth]{entirePlotAnnGraphGene}
+\caption{The Glycolysis / Gluconeogenesis pathway (path:00010). The enzymes identified in the submitted genes are colored red.}\label{entirePlotAnnGraphGene}
+\end{center}
+\end{figure}
+
+\subsubsection{Annotate compound sets and identify enire pathways}\label{annEntireCompound}
+
+Our system can provide the annotation and identification of pathways based on compound sets. Users only need to set the value of the argument \Rfunarg{type} of the function \Rfunction{identifyGraph} as "compound". We still use the above pathway graphs. We then input the interesting compound set and the list of pathway graphs to the function \Rfunction{identifyGraph}. Through performing the function \Rfunction{identifyGraph}, the interesting gene set can be annotated to pathway graphs. Finally, the enrichment significance of pathways can be evaluated using hypergeometric test. The following commands can annotate a compound set and identify statistically significantly enriched metabolic pathways.
+
+<<>>=
+#get a set of compounds
+compoundList<-getExample(geneNumber=0,compoundNumber=100)
+#annotate compound sets and identify significant pathways
+ann<-identifyGraph(compoundList,graphList,type="compound")
+#convert ann to data.frame
+result<-printGraph(ann)
+#display a part of the result
+result[1:10,c(1,3,4,5)]
+@
+
+We can also see the identified result of the pathway as follows:
+<<>>=
+result[result[,1] %in% "path:00010",]
+@
+
+The following command displays the Glycolysis / Gluconeogenesis pathway (path:00010). The compounds identified in the submitted compounds are colored red.
+<<entirePlotAnnGraphCompound, fig=TRUE, include=FALSE, prefix=FALSE>>=
+#visualize
+plotAnnGraph("path:00010",graphList,ann)
+@
+The result graph is shown in Figure \ref{entirePlotAnnGraphCompound}. 
+
+\begin{figure}[htbp]
+\begin{center}  
+\includegraphics[width=1.0\textwidth]{entirePlotAnnGraphCompound}
+\caption{The Glycolysis / Gluconeogenesis pathway (path:00010). The nodes identified in the submitted compounds are colored red.}\label{entirePlotAnnGraphCompound}
+\end{center}
+\end{figure}
+
+\subsubsection{Annotate compound and gene sets and identify entire pathways}\label{annEntireCompoundGene}
+If users have not only interesting gene sets but also interesting compound sets, then users can annotate them at the same time and identify significant entire pathways. To do this, we need to set the argument \Rfunarg{type} of the function \Rfunction{identifyGraph} as "gene\rule[-2pt]{0.2cm}{0.5pt}compound". We input the interesting compound set and the list of pathway graphs to the function \Rfunction{identifyGraph}. Through performing the function \Rfunction{identifyGraph}, the interesting gene and compound set can be annotated to pathway graphs. Finally, the enrichment significance of pathways can be evaluated using hypergeometric test. The following commands can annotate a combined set of genes and compounds and identify statistically significantly enriched metabolic pathways.
+
+<<>>=
+#get a set of compounds and genes
+componentList<-getExample(geneNumber=1000,compoundNumber=100)
+#annotate gene and compound sets to metabolic graphs 
+#and identify significant graphs
+ann<-identifyGraph(componentList,graphList,type="gene_compound")
+#convert ann to data.frame
+result<-printGraph(ann)
+#display a part of results
+result[1:10,c(1,3,4,5)]
+@
+
+The result graph is shown in Figure \ref{entirePlotAnnGraphGeneCompound}. We can also see the identified result of the pathway as follows:
+<<>>=
+result[result[,1] %in% "path:00010",]
+@
+
+The following command displays the Glycolysis / Gluconeogenesis pathway (path:00010). The nodes identified in the submitted compounds and genes are colored red. 
+<<entirePlotAnnGraphGeneCompound, fig=TRUE, include=FALSE, prefix=FALSE>>=
+#visualize
+plotAnnGraph("path:00010",graphList,ann)
+@
+ 
+\begin{figure}[htbp]
+\begin{center}  
+\includegraphics[width=1.0\textwidth]{entirePlotAnnGraphGeneCompound}
+\caption{The Glycolysis / Gluconeogenesis pathway. The nodes identified in the submitted compounds and genes are colored red.}\label{entirePlotAnnGraphGeneCompound}
+\end{center}
+\end{figure}
+
+\subsubsection{Other examples}
+
+The function \Rfunction{identifyGraph} is flexible in input of pathway data. We can change pathway data for different analyses. For example, we can use reference pathways linked to KO identifiers to support the identification of not only metabolic pathways but also non-metabolic pathways. The following commands annotate a gene set and identify significantly enriched metabolic and non-metabolic pathways:
+
+<<>>=
+##Convert all metabolic pathways to graphs.
+metabolicKO<-get("metabolicKO",envir=k2ri)
+gm<-getMetabolicGraph(metabolicKO)
+##Convert all non-metabolic pathways to graphs, 
+nonMetabolicKO<-get("nonMetabolicKO",envir=k2ri)
+gn<-getNonMetabolicGraph(nonMetabolicKO)
+graphList<-c(gm,gn)
+##get a set of genes
+geneList<-getExample(geneNumber=1000,compoundNumber=0)
+#annotate gene sets and identify significant pathways
+ann<-identifyGraph(geneList,graphList,type="gene")
+result<-printGraph(ann)
+#display part of results
+result[1:10,c(1:5)]
+@
+The result includes both metabolic pathways and non-metabolic pathways.
+
+The following command displays the MAPK signaling pathway (path:04010). The compounds identified in the submitted compounds are colored red. 
+
+<<entirePlotAnnGraphKOMN, fig=TRUE, include=FALSE, prefix=FALSE>>=
+#visualize
+plotAnnGraph("path:04010",graphList,ann)
+@
+The result graph is shown in Figure \ref{entirePlotAnnGraphKOMN}. We can see the identified result of the pathway as follows:
+<<>>=
+result[result[,1] %in% "path:04010",]
+@
+
+\begin{figure}[htbp]
+\begin{center}  
+\includegraphics[width=1.0\textwidth]{entirePlotAnnGraphKOMN}
+\caption{The MAPK signaling pathway (path:04010). The nodes identified in the submitted genes are colored red.}\label{entirePlotAnnGraphKOMN}
+\end{center}
+\end{figure}
+
+Note that for metabolic pathways, the results of pathway analyses based on KO may be slightly different from that based on EC. We suggest users to use reference pathways linked to KO identifiers to analyze metabolic pathways because KEGG uses KO to annotate genes to pathways. In this vignette, many examples of pathway analyses use reference pathways linked to EC identifiers because enzymes may be more easily understood by users. The following commands can annotate a gene set and identify significantly enriched metabolic pathways by using KO metabolic pathways:
+<<>>=
+##Convert all metabolic pathways to graphs.
+metabolicKO<-get("metabolicKO",envir=k2ri)
+graphList<-getMetabolicGraph(metabolicKO)
+##get a set of genes
+geneList<-getExample(geneNumber=1000,compoundNumber=0)
+#annotate gene sets and identify significant pathways
+ann<-identifyGraph(geneList,graphList)
+result<-printGraph(ann)
+#display part of results
+result[1:10,c(1,3,4,5)]
+@
+
+\subsection{The k-cliques method to identify subpathways}\label{annSub}
+The section mainly introduces the annotation and identification of subpathways. We developed the k-cliques subpathway identification method \cite{Li2009} according to pathway structure data provided by KEGG. Firstly, each pathway is converted to an undirected graph. Secondly, according to parameter k, all subpathways (k-cliques) can be constructed using k-cliques algorithm \cite{Huber2007} on each above graph. The identifier of each subpathway is given with its pathway identifier plus a subpathway number (e.g., path:00010\rule[-2pt]{0.2cm}{0.5pt}1). For each subpathway (k-clique), distance among nodes within it is no greater than the parameter k (a user-defined distance). Component sets can then be annotated to these subpathways through assigning EC (KO) numbers for them and matching them to these subpathways. Finally, the significantly enriched subpathways can be identified using hypergeometric test.
+
+\subsubsection{Annotate gene sets and identify subpathways}\label{annSub2Gene}
+Users can annotate the interesting gene sets and identify significantly enriched subpathways. Firstly, we need to construct a list of the undirected pathway graphs with enzymes as nodes. Enzymes in a graph are connected by an edge if their corresponding reactions have a common compound. Secondly, we use the function \Rfunction{getKcSubiGraph} to mine subpathways with the parameter k. We then input the interesting gene set and the list of subpathways to the function \Rfunction{identifyGraph}. Through performing the function, the interesting gene set can be annotated to subpathways. Finally, the enrichment significance of pathways can be evaluated using hypergeometric test. 
+
+The following commands can annotate gene sets and identify statistically significantly enriched metabolic subpathways based on the k-cliques method. The list of pathway graphs is obtained from the function \Rfunction{getMetabolicECECUGraph}, which can get all undirected metabolic pathway graphs with enzymes as nodes and compounds as edges (see the section \ref{example2} and Figure \ref{combination2-2}).
+<<>>=
+##identify metabolic subpathways based on gene sets
+#get the enzyme-enzyme pathway graphs
+graphList<-getMetabolicECECUGraph()
+#get all 4-clique subgraphs
+subGraphList<-getKcSubiGraph(k=4,graphList)
+#get a set of genes
+geneList<-getExample(geneNumber=1000,compoundNumber=0)
+#annotate gene sets to subpathways 
+#and identify significant graphs
+ann<-identifyGraph(geneList,subGraphList,type="gene")
+#convert ann to data.frame
+result<-printGraph(ann)
+#display a part of results
+result[1:15,]
+@
+
+We find that the subpathway "path:00010\rule[-2pt]{0.2cm}{0.5pt}3", which is a subpathway of the Glycolysis / Gluconeogenesis pathway, is statistically significant. We can see the identified result of the subpathway as follows:
+<<>>=
+result[result[,1] %in% "path:00010_3",]
+@
+
+The following commands can display the subpathway. 
+
+<<kCliquePlotAnnGraphGene, fig=TRUE, include=FALSE, prefix=FALSE>>=
+plotAnnGraph("path:00010_3",subGraphList,ann)
+@
+The result is shown in Figure \ref{kCliquePlotAnnGraphGene}. The nodes identified in the submitted genes are colored red. The subpathway is located in the bottom of Figure \ref{combination2-2}. 
+
+\begin{figure}[htbp]
+\begin{center}  
+\includegraphics[width=1.0\textwidth]{kCliquePlotAnnGraphGene}
+\caption{A significant subpathway of the Glycolysis / Gluconeogenesis pathway, which is located in the bottom of Figure \ref{combination2-2}. The subpathway is constructed based on the k-clique method. In the subpathway, the distance between any two nodes is no greater than 4. The nodes identified in the submitted genes are colored red.}\label{kCliquePlotAnnGraphGene}
+\end{center}
+\end{figure}
+
+The following command can display the annotated genes in the subpathway to the corresponding entire pathway in KEGG website. The nodes identified in the submitted genes are colored red.
+<<fig=FALSE>>=
+#visualize
+plotAnnGraph("path:00010_3",subGraphList,ann,displayInR=FALSE,gotoKEGG=TRUE)
+@
+The result map is shown in Figure \ref{subPlotAnnGraphGeneKEGG}.
+
+\begin{figure}[htbp]
+\begin{center}  
+\includegraphics[width=1.0\textwidth,height=0.9\textheight]{subPlotAnnGraphGeneKEGG}
+\caption{Display the annotated genes in the subpathway "path:00010-3" to the corresponding entire pathway in KEGG website. The nodes identified in the submitted genes are colored red.}\label{subPlotAnnGraphGeneKEGG}
+\end{center}
+\end{figure}
+
+
+\subsubsection{Annotate compound sets and identify subpathways}\label{annSub2Compound}
+
+Users can annotate the interesting compound sets and identify significant subpathways. Users need to set the value of the argument \Rfunarg{type} of the function \Rfunction{identifyGraph} as "compound". Firstly, we construct a list of pathway graphs with compounds as nodes and enzymes as edges. Secondly, we use the function \Rfunction{getKcSubiGraph} to mine subpathways with the parameter k. We then input the interesting compound set and the list of subpathways to the function \Rfunction{identifyGraph}. Through performing the function, the interesting compound set can be annotated to subpathways. Finally, the enrichment significance of pathways can be evaluated using hypergeometric test. 
+
+The following commands can annotate compound sets and identify statistically significantly enriched metabolic subpathways. The list of pathway graphs is obtained from the function \Rfunction{getMetabolicCOCOUGraph}, which can get all undirected metabolic pathway graphs with compounds as nodes and enzymes as edges (see the section \ref{example3} and Figure \ref{combination3-2}).
+<<>>=
+#get the compound-compound pathway graphs
+graphList<-getMetabolicCOCOUGraph()
+#get all 4-clique subgraphs
+subGraphList<-getKcSubiGraph(k=4,graphList)
+#get a set of compounds
+compoundList<-getExample(geneNumber=0,compoundNumber=100)
+#annotate compound sets and identify significant subpathways
+ann<-identifyGraph(compoundList,subGraphList,type="compound")
+#convert ann to data.frame
+result<-printGraph(ann)
+#display part of results
+result[1:10,c(1,3,4,5)]
+@
+
+We find that the subpathway "path:00010\rule[-2pt]{0.2cm}{0.5pt}1", which is a subpathway of the Glycolysis / Gluconeogenesis pathway, is statistically significant. We can see the identified result of the subpathway as follows:
+<<>>=
+result[result[,1] %in% "path:00010_1",]
+@
+
+The following commands can display the subpathway. 
+<<kCliquePlotAnnGraphCompound, fig=TRUE, include=FALSE, prefix=FALSE>>=
+plotAnnGraph("path:00010_1",subGraphList,ann)
+@
+The result is shown in Figure \ref{kCliquePlotAnnGraphCompound}. The nodes identified in the submitted genes are colored red. The subpathway is located in the bottom of Figure \ref{combination3-2}. 
+
+\begin{figure}[htbp]
+\begin{center}  
+\includegraphics[width=1.0\textwidth]{kCliquePlotAnnGraphCompound}
+\caption{A significant subpathway of the Glycolysis / Gluconeogenesis pathway. The subpathway is constructed based on the k-clique method. In the subpathway, the distance between any two nodes is no greater than 4. The nodes identified in the submitted compounds are colored red.}\label{kCliquePlotAnnGraphCompound}
+\end{center}
+\end{figure}
+
+\subsubsection{Annotate compound and gene sets and identify subpathways}\label{annSub2CompoundGene}
+
+Users can annotate the interesting gene and compound sets simultaneously and identify significant subpathways. To do this, we need to set the argument \Rfunarg{type} of the function \Rfunction{identifyGraph} as "gene\rule[-2pt]{0.2cm}{0.5pt}compound". Firstly, we construct a list of undirected pathway graphs with enzymes and compounds as nodes. Secondly, we use the function \Rfunction{getKcSubiGraph} to mine subpathways with the parameter k. We then input the interesting gene and compound set and the list of subpathways to the function \Rfunction{identifyGraph}. Through performing the function, the interesting gene and compound set can be annotated simultaneously to subpathways. Finally, the enrichment significance of subpathways can be evaluated using hypergeometric test.
+
+The following commands can annotate gene and compound sets and identify statistically significantly enriched metabolic subpathways. The list of pathway graphs is obtained from the function \Rfunction{getMetabolicECCOUGraph}, which can get all undirected metabolic pathway graphs with enzymes and compounds as nodes (see the section \ref{example1} and Figure \ref{combination1-2}).
+<<>>=
+graphList<-getMetabolicECCOUGraph()
+#get all 8-clique subgraphs
+subGraphList<-getKcSubiGraph(k=8,graphList)
+#get a set of compounds and genes
+componentList<-getExample(geneNumber=1000,compoundNumber=100)
+#annotate gene and compound sets and identify significant subpathways
+ann<-identifyGraph(componentList,subGraphList,type="gene_compound")
+#convert ann to data.frame
+result<-printGraph(ann)
+#display part of results
+result[1:15,c(1,3,4,5)]
+@
+
+The following commands can display a subpathway of the Glycolysis / Gluconeogenesis pathway.
+
+<<kCliquePlotAnnGraphGeneCompound, fig=TRUE, include=FALSE, prefix=FALSE>>=
+plotAnnGraph("path:00010_3",subGraphList,ann)
+@
+The result graph is shown in Figure \ref{kCliquePlotAnnGraphGeneCompound}. We can see the identified result of the subpathway as follows:
+<<>>=
+result[result[,1] %in% "path:00010_3",]
+@
+
+\begin{figure}[htbp]
+\begin{center}  
+\includegraphics[width=1.0\textwidth]{kCliquePlotAnnGraphGeneCompound}
+\caption{A significant subpathway of the Glycolysis / Gluconeogenesis pathway. The subpathway is constructed based on the k-clique method. In the subpathway, the distance between any two nodes is no greater than 8. The nodes identified in the submitted compounds and genes are colored red.}\label{kCliquePlotAnnGraphGeneCompound}
+\end{center}
+\end{figure}
+
+\subsubsection{Other examples}
+
+We can use KO referenece pathways to support the annotation and identification of not only metabolic subpathways but also non-metabolic subpathways. The following commands can identify subpathway of non-metabolic pathways based on gene sets. The list of pathway graphs is obtained from the function \Rfunction{getNonMetabolicKOKOUGraph}, which can get all undirected non-metabolic pathway graphs with KOs as nodes (see the section \ref{example2} and Figure \ref{combination2-6}).
+
+\begin{Schunk}
+\begin{Sinput}
+> ##identify non-metabolic subpathways based on gene sets
+> #get the KO-KO pahway graphs
+> graphList<-getNonMetabolicKOKOUGraph()
+> #get all 4-clique subgraphs
+> subGraphList<-getKcSubiGraph(k=4,graphList)
+> #get a set of genes
+> geneList<-getExample(geneNumber=1000,compoundNumber=0)
+> #annotate gene sets to subpathways 
+> #and identify significant subpathways
+> ann<-identifyGraph(geneList,subGraphList,type="gene")
+> #convert ann to data.frame
+> result<-printGraph(ann)
+result[1:15,]
+\end{Sinput}
+\end{Schunk}
+
+We can also get all undirected metabolic pathway graphs with enzymes as nodes and compounds as edges, in which each node contains only one enzyme and each enzyme only appears once in the graph. The kinds of pathway data are used by the SubpathwayMiner system to identify metabolic subpathways. For the iSubphathwayMiner system, the list of pathway graphs can be obtained from the function \Rfunction{getMetabolicECECUEMGraph} (see the section \ref{example2} and Figure \ref{combination2-4}). The following commands use the list to identify statistically significantly enriched metabolic subpathways:
+
+\begin{Schunk}
+\begin{Sinput}
+> #get metabolic pathway graphs with enzymes as nodes and compounds as edges
+> #each node contains only one enzyme and each enzyme only appears once.
+> graphList<-getMetabolicECECUEMGraph()
+> #get all 4-clique subgraphs
+> subGraphList<-getKcSubiGraph(k=4,graphList)
+> ##get a set of genes
+> geneList<-getExample(geneNumber=1000,compoundNumber=0)
+> #annotate gene sets and identify significant subpathways
+> ann<-identifyGraph(geneList,subGraphList,type="gene")
+> result<-printGraph(ann)
+\end{Sinput}
+\end{Schunk}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+\section{Visualize a pathway graph}\label{visualizeSection}
+
+We provide the function \Rfunction{plotGraph} for visualization of a pathway graph. The function can display a pathway graph using varieties of layout styles. The default is the KEGG style. We implement it by using detailed information about pathway map obtained from KGML files, which are converted to attributes of the corresponding graph, including graphics\rule[-2pt]{0.2cm}{0.5pt}x, graphics\rule[-2pt]{0.2cm}{0.5pt}y, graphics\rule[-2pt]{0.2cm}{0.5pt}name, graphics\rule[-2pt]{0.2cm}{0.5pt}type, names, type, etc. The function is developed based on the function \Rfunction{plot.igraph} in the \Rpackage{igraph} and the function \Rfunction{plot}. Therefore, most of functions in \Rfunction{plot.igraph} and \Rfunction{plot} are also available for the \Rfunction{plotGraph}. We will detailedly describe how to efficiently use the function. The following command is a simple usage for the function to visualize pathway graphs with the KEGG style. 
+
+We firstly generate a pathway graph.
+<<>>=
+path<-paste(system.file(package="iSubpathwayMiner"),
+"/localdata/kgml/metabolic/ec/",sep="")
+gm<-getMetabolicGraph(getPathway(path,c("ec00010.xml")))
+@
+
+We can use \Rfunction{plotGraph} to visualize the pathway graph as follows:
+<<keggStyle1, fig=TRUE, include=FALSE, prefix=FALSE>>=
+#visualize
+plotGraph(gm[[1]])
+@
+The result graph is shown in Figure \ref{keggStyle1}. The default layout style of the function is the KEGG style.
+
+\begin{figure}[!htbp]
+\begin{center}
+\includegraphics[width=1.0\textwidth]{keggStyle1}
+\caption{The Glycolysis / Gluconeogenesis pathway graph with the KEGG style}\label{keggStyle1}
+\end{center}
+\end{figure}
+
+
+\subsection{Change node label of the pathway graph}
+We can change node labels into the gene identifiers of the current organism as follows:
+<<metabolicSymbol, fig=TRUE, include=FALSE, prefix=FALSE>>=
+plotGraph(gm[[1]],vertex.label=getNodeLabel(gm[[1]],
+type="currentId",displayNumber=1))
+@
+The result graph is shown in Figure \ref{metabolicSymbol}. Because the default type of gene identifiers of the current organism is Human Entrez Gene IDs. Therefore, many node labels are changed into Human Entrez Gene IDs. If nodes don't correspond to any Human Entrez Gene IDs, then node labels will not be changed. 
+
+When there are many gene identifiers in a node, we can use the argument \Rfunarg{displayNumber} to limit the number of gene identifiers displayed. The default value of the argument is 1. This means that if there is more than one gene in a node, the symbol "..." is added to the node.
+
+\begin{figure}[!htbp]
+\begin{center}
+\includegraphics[width=1.0\textwidth]{metabolicSymbol}
+\caption{The Glycolysis / Gluconeogenesis pathway graph. We can change node labels into the gene identifiers of the current organism.}\label{metabolicSymbol}
+\end{center}
+\end{figure}
+
+We can change node labels of a non-metabolic pathway into gene official symbols as follows:
+<<nonMetabolicSymbol, fig=TRUE, include=FALSE, prefix=FALSE>>=
+path<-paste(system.file(package="iSubpathwayMiner"),
+"/localdata/kgml/non-metabolic/ko/",sep="")
+gn<-getNonMetabolicGraph(getPathway(path,c("ko04010.xml")))
+plotGraph(gn[[1]],vertex.label=getNodeLabel)
+@
+The result graph is shown in Figure \ref{nonMetabolicSymbol}. Compared with Figure \ref{getNonMetabolicGraph1}, node labels with KO identifiers are changed into gene official symbols. Note that the change is only used as visualization of the pathway graph. Node data in a pathway graph are not changed.
+
+\begin{figure}[!htbp]
+\begin{center}
+\includegraphics[width=1.0\textwidth]{nonMetabolicSymbol}
+\caption{The MAPK signaling pathway graph and gene symbols as node labels}\label{nonMetabolicSymbol}
+\end{center}
+\end{figure}
+
+\subsection{Zoom a part of pathway graph}
+The following commands can zoom in the left-top part of the MAPK signaling pathway graph and gene symbols as node labels.
+<<nonMetabolicSymbolZoom, fig=TRUE, include=FALSE, prefix=FALSE>>=
+plotGraph(gn[[1]],vertex.label=getNodeLabel,xlim=c(-1,-0.5),ylim=c(0,1))
+@
+
+For a graph, the limits for the horizontal and vertical axis is (-1,1). When we set them as (-1,-0.5) and (0,1), we can zoom in the left-top part of graphs.
+
+\begin{figure}[!htbp]
+\begin{center}
+\includegraphics[width=1.0\textwidth]{nonMetabolicSymbolZoom}
+\caption{Zoom in the left-top part of the MAPK signaling pathway graph and gene symbols as node labels}\label{nonMetabolicSymbolZoom}
+\end{center}
+\end{figure}
+
+\subsection{The basic commands to visualize a pathway graph with custom style}
+
+We can display a pathway graph with different styles by using some basic commands. For example, we can set a color vector and then use it to change color of each node frame. Figure \ref{colorFrameGraphSet} shows an example of changing the certain enzyme node as red frame. The commands are as follows:
+
+<<colorFrameGraphSet, fig=TRUE, include=FALSE, prefix=FALSE>>=
+#add red frame to the enzyme "ec:4.1.2.13" 
+vertex.frame.color<-ifelse(V(gm[[1]])$names=="ec:4.1.2.13","red","dimgray")
+vertex.frame.color
+#display new graph
+plotGraph(gm[[1]],vertex.frame.color=vertex.frame.color)
+@
+
+\begin{figure}[!htbp]
+\begin{center}
+\includegraphics[width=1.0\textwidth]{colorFrameGraphSet}
+\caption{The graph with the frame of enzyme "ec:4.1.2.13" colored red}\label{colorFrameGraphSet}
+\end{center}
+\end{figure}
+
+Operations to change other settings are similar to the example. In order to change styles of a graph, we only need to get and change the value of vectors related to styles and then transfer them to the function \Rfunction{plotGraph}. Detailed information can be provided in the help of the function \Rfunction{plot.igraph} in the \Rpackage{igraph} package and the function \Rfunction{plot} in the \Rpackage{graphics} package. Here, we only provide some examples of setting some styles for interpreting the usages of the function \Rfunction{plotGraph}. For instance, we can change node color, size, label font, x-y coordinates, etc. Figure \ref{newGraphSet} shows the results and the corresponding commands as follows:
+
+<<newGraphSet, fig=TRUE, include=FALSE, prefix=FALSE>>=
+#add green label to the comound "cpd:C00111" 
+vertex.label.color<-ifelse(V(gm[[1]])$names=="cpd:C00111","green","dimgray")
+#change node color
+vertex.color<-sapply(V(gm[[1]])$type,function(x) if(x=="enzyme"){"pink"}
+else if(x=="compound"){"yellow"} else{"white"})
+#change node size
+size<-ifelse(V(gm[[1]])$graphics_name=="Starch and sucrose metabolism",20,8)
+#change a compound label
+#font size
+vertex.label.cex<-ifelse(V(gm[[1]])$names=="cpd:C00036",1.0,0.6)
+#italic
+vertex.label.font<-ifelse(V(gm[[1]])$names=="cpd:C00036",3,1)
+#change y coordinate of an enzyme
+layout<-getLayout(gm[[1]])
+index<-V(gm[[1]])[V(gm[[1]])$names=="ec:4.1.1.32"]
+layout[index+1,2]<-layout[index+1,2]+50
+#display the new graph 
+plotGraph(gm[[1]],vertex.frame.color=vertex.frame.color,
+vertex.label.color=vertex.label.color,vertex.color=vertex.color,
+vertex.size=size,vertex.size2=size,vertex.label.cex=vertex.label.cex,
+vertex.label.font=vertex.label.font,layout=layout)
+@
+
+\begin{figure}[!htbp]
+\begin{center}
+\includegraphics[width=1.0\textwidth]{newGraphSet}
+\caption{The new graph after changing some setting of visualization}\label{newGraphSet}
+\end{center}
+\end{figure}
+
+For a non-metabolic pathway graph, we can change colors of edge with high betweenness as red. 
+
+<<edgeColorGraph, fig=TRUE, include=FALSE, prefix=FALSE>>=
+path<-paste(system.file(package="iSubpathwayMiner"),
+"/localdata/kgml/non-metabolic/ko/",sep="")
+gn<-getNonMetabolicGraph(getPathway(path,c("ko04010.xml")))
+#change color of edges with top 10% betweenness as red
+eb<-edge.betweenness(gn[[1]])
+edge.color<-ifelse(eb>quantile(eb,0.9),"red","dimgray")
+plotGraph(gn[[1]],edge.color=edge.color)
+@
+The result is shown in Figure \ref{edgeColorGraph}.
+
+\begin{figure}[!htbp]
+\begin{center}
+\includegraphics[width=1.0\textwidth]{edgeColorGraph}
+\caption{The new graph after changing edge color}\label{edgeColorGraph}
+\end{center}
+\end{figure}
+
+
+\subsection{The layout style of a pathway graph in R}\label{visulizeLayoutSection}
+The argument \Rfunarg{layout} of the function \Rfunction{plotGraph} is used to determine the placement of the nodes for drawing a graph. There are mainly two methods to determine the placement of the nodes for drawing a pathway graph: the KEGG layout style and \Rfunarg{layout} provided in the function \Rfunction{plot.igraph} of the \Rpackage{igraph} package. The default layout is the KEGG layout style, for which the coordinates of nodes in KEGG pathway maps is used to determine the placement of the nodes for drawing a graph. Therefore, the returned figure by the function can be very similar to the KEGG pathway graph. Figure \ref{keggStyle1} displays a pathway graph with the KEGG layout style.
+
+The layout styles provided in \Rpackage{igraph} include \Rfunarg{layout.random}, \Rfunarg{layout.circle}, \Rfunarg{layout.sphere}, \Rfunarg{layout.sphere}, \Rfunarg{layout.fruchterman.reingold}, \Rfunarg{layout.kamada.kawai}, \Rfunarg{layout.spring}, \Rfunarg{layout.lgl}, \Rfunarg{layout.fruchterman.reingold.grid}, \Rfunarg{layout.graphopt}, \Rfunarg{layout.mds}, \Rfunarg{layout.svd}, \Rfunarg{layout.norm}, \Rfunarg{layout.drl}, and \Rfunarg{layout.reingold.tilford}. As shown in Figure \ref{layoutrandom}, the \Rfunarg{layout.random} places the nodes randomly. The \Rfunarg{layout.circle} (e.g., Figure \ref{layoutcircle}) places the nodes on an unit circle. The \Rfunarg{layout.sphere} (e.g., Figure \ref{expandNode1}) places the nodes (approximately) uniformly on the surface of a sphere. The \Rfunarg{layout.fruchterman.reingold} uses a force-based algorithm proposed by Fruchterman and Reingoldl. The \Rfunarg{layout.kamada.kawai} is another force based algorithm. The \Rfunarg{layout.spring} is a spring embedder algorithm. The \Rfunarg{layout.lgl} is for large connected graphs, it is similar to the layout generator of the Large Graph Layout software. The \Rfunarg{layout.fruchterman.reingold.grid} is similar to \Rfunarg{layout.fruchterman.reingold} but repelling force is calculated only between nodes that are closer to each other than a limit, so it is faster. The \Rfunarg{layout.graphopt} is a port of the graphopt layout algorithm by Michael Schmuhl. The \Rfunarg{layout.mds} uses metric multidimensional scaling for generating the coordinates. The \Rfunarg{layout.svd} is a currently experimental layout function based on singular value decomposition. The \Rfunarg{layout.norm} normalizes a layout, it linearly transforms each coordinate separately to fit into the given limits. The \Rfunarg{layout.drl} is another force-driven layout generator, it is suitable for quite large graphs. The \Rfunarg{layout.reingold.tilford} generates a tree-like layout.
+
+The following command displays a pathway graph using \Rfunarg{layout.random} style. 
+<<layoutrandom, fig=TRUE, include=FALSE, prefix=FALSE>>=
+plotGraph(gm[[1]],layout=layout.random)
+@
+The result is shown in Figure \ref{layoutrandom}.
+
+The following command displays a pathway graph using \Rfunarg{layout.circle} style.
+<<layoutcircle, fig=TRUE, include=FALSE, prefix=FALSE>>=
+plotGraph(gm[[1]],layout=layout.circle)
+@
+The result is shown in Figure \ref{layoutcircle}.
+
+\begin{figure}[!htbp]
+\begin{center}
+\includegraphics[width=1.0\textwidth]{layoutrandom}
+\caption{The pathway graph with the \Rfunarg{layout.random} style}\label{layoutrandom}
+\end{center}
+\end{figure}
+
+\begin{figure}[!htbp]
+\begin{center}
+\includegraphics[width=1.0\textwidth]{layoutcircle}
+\caption{The pathway graph with the \Rfunarg{layout.circle} style}\label{layoutcircle}
+\end{center}
+\end{figure}
+
+
+\subsection{Edit a pathway graph}
+The function \Rfunction{tkplot} is able to edit a pathway graph. One way to visualize a pathway graph is to display the pathway graph with the function \Rfunction{tkplot}, handtune the placement of the nodes, query the coordinates by the function \Rfunction{tkplot.getcoords} and use them with the function \Rfunction{plotGraph} to visualize the graph.  The following commands visualize a pathway graph using the function \Rfunction{tkplot}. Figure \ref{tkplot} shows the result. We can then change coordinates by handtuning the placement of the nodes. Figure \ref{tkplotafter} is an example graph after handtuning some nodes (red). Finally, we can get new coordinates of nodes using the function \Rfunction{tkplot.getcoords} and display the graph with new node coordinates using the function \Rfunction{plotGraph} (Figure \ref{plotGraphafter}). 
+\begin{Schunk}
+\begin{Sinput}
+> #display a pathway graph using tkplot
+> tkp.id<-tkplot(gm[[1]],layout=getLayout(gm[[1]]),
++ vertex.label=V(gm[[1]])$graphics_name,
++ vertex.color=V(gm[[1]])$graphics_bgcolor,
++ vertex.size=8,vertex.label.cex=0.5)
+> #users can handtune the placement of the nodes and then obtain new 
+> #coordinates using the function tkplot.getcoords.
+> layout<-tkplot.getcoords(tkp.id)
+> layout<-cbind(layout[,1],-layout[,2])
+> #display the graph with new corrodinates
+> plotGraph(gm[[1]],layout=layout)
+\end{Sinput}
+\end{Schunk}
+
+\begin{figure}[!htbp]
+\begin{center}
+\includegraphics{tkplot.pdf}
+\caption{The graph using tkplot}\label{tkplot}
+\end{center}
+\end{figure}
+
+\begin{figure}[!htbp]
+\begin{center}
+\includegraphics{tkplotafter.pdf}
+\caption{The graph after editing the pathway graph}\label{tkplotafter}
+\end{center}
+\end{figure}
+
+\begin{figure}[!htbp]
+\begin{center}
+\includegraphics{plotGraphafter.pdf}
+\caption{Display the pathway graph with new node coordinates using the function plotGraph}\label{plotGraphafter}
+\end{center}
+\end{figure}
+
+\subsection{Visualize a pathway graph through linking to the KEGG website}
+We can display a metabolic pathway graph using links to the KEGG as follows: 
+<<>>=
+gm[[1]]$link
+#link to KEGG
+browseURL(gm[[1]]$link)
+@
+The result graph is shown in Figure \ref{linkec00010}.
+
+\begin{figure}[!htbp]
+\begin{center}
+\includegraphics[width=1.0\textwidth,height=0.9\textheight]{linkec00010}
+\caption{The Glycolysis / Gluconeogenesis pathway in KEGG website}\label{linkec00010}
+\end{center}
+\end{figure}
+
+
+We can display a non-matabolic pathway graph using links to the KEGG as follows:
+<<>>=
+gn[[1]]$link
+#link to KEGG
+browseURL(gn[[1]]$link)
+@
+The result graph is shown in Figure \ref{linkko04010}.
+
+\begin{figure}[!htbp]
+\begin{center}
+\includegraphics[width=1.0\textwidth]{linkko04010}
+\caption{The MAPK signaling pathway in KEGG website}\label{linkko04010}
+\end{center}
+\end{figure}
+
+
+\subsection{Visualize the result graph of pathway analyses}
+
+We can use the function \Rfunction{plotAnnGraph} to visualize the result graph of a pathway analysis (e.g., most of result graphs in the section \ref{Methods}). We take an example of visualizing a metabolic pathway, which is obtained from the annotation and identification method of entire pathways based on gene sets. 
+
+The following commands annotate a gene set to metabolic pathways and identify significantly enriched metabolic pathways.
+<<>>=
+##Convert all metabolic pathways to graphs.
+metabolicEC<-get("metabolicEC",envir=k2ri)
+graphList<-getMetabolicGraph(metabolicEC)
+##get a set of genes
+geneList<-getExample(geneNumber=1000)
+#annotate gene sets to pathway graphs 
+#and identify significant pathway graphs
+ann<-identifyGraph(geneList,graphList)
+@
+
+
+The following command displays the Glycolysis / Gluconeogenesis pathway (path:00010). Users need to input pathway identifier, a list of pathway graphs, and the result variable \Robject{ann} of pathway analysis.
+
+<<entirePlotAnnGraphGeneV, fig=TRUE, include=FALSE, prefix=FALSE>>=
+#visualize
+plotAnnGraph("path:00010",graphList,ann)
+@
+The result graph is shown in Figure \ref{entirePlotAnnGraphGeneV}. The red nodes in the result graph represent the enzymes which include the submitted genes. In fact, the function \Rfunction{plotAnnGraph} can obtain the annotated genes from the variable \Robject{ann} , match the genes to the given pathway, and display the pathway with the annotated genes colored red.  
+
+\begin{figure}[htbp]
+\begin{center}  
+\includegraphics[width=1.0\textwidth]{entirePlotAnnGraphGeneV}
+\caption{The Glycolysis / Gluconeogenesis pathway (path:00010). The enzymes identified in the submitted genes are colored red.}\label{entirePlotAnnGraphGeneV}
+\end{center}
+\end{figure}
+
+We can also use the function \Rfunction{plotAnnGraph} to visualize pathways not only in R but also in KEGG web site. The annotated genes are also colored red in KEGG maps.
+
+<<entirePlotAnnGraphGeneV, fig=TRUE, include=FALSE, prefix=FALSE>>=
+#visualize
+plotAnnGraph("path:00010",graphList,ann,gotoKEGG=TRUE)
+@
+The visualization of pathway in R is the same as Figure \ref{entirePlotAnnGraphGeneV}. The visualization of pathway through linking to KEGG is shown in Figure \ref{entirePlotAnnGraphGeneVKEGG}.
+
+\begin{figure}[htbp]
+\begin{center}  
+\includegraphics[width=1.0\textwidth,height=0.9\textheight]{entirePlotAnnGraphGeneVKEGG}
+\caption{The Glycolysis / Gluconeogenesis pathway (path:00010). The enzymes identified in the submitted genes are colored red.}\label{entirePlotAnnGraphGeneVKEGG}
+\end{center}
+\end{figure}
+
+\subsection{Export a pathway graph}
+The function \Rfunction{write.graph} can export a pathway graph to foreign file formats. The following command exports a metabolic pathway graph to the GML format \url{http://www.infosun.fim.uni-passau.de/Graphlet/GML/}. The format is supported by Cytoscape software \cite{Shannon2003} that provides more advanced visualization facilities \url{http://www.cytoscape.org}.
+<<>>=
+write.graph(gm[[1]], "ec00010.txt", "gml")
+@
+\section{Data management}\label{managementSection}
+The environment variable \Robject{k2ri}, which is used as the database of the system, stores many data relative to pathway analyses. We can use the function \Rfunction{ls} to see the environment variable and use \Rfunction{ls(k2ri)} to see data in it. These data include \Robject{gene2ec}, \Robject{gene2ko}, \Robject{metabolicEC}, \Robject{metabolicKO}, \Robject{nonMetabolicKO}, etc. For example, the variable \Robject{gene2ec} stores relation betweeen genes and enzymes in the current organism (e.g., relation between human genes and enzymes). The variable \Robject{metabolicEC} stores reference metabolic pathways linked to EC identifiers. The variable \Robject{metabolicKO} stores reference metabolic pathways linked to KO identifiers. The variable \Robject{nonMetabolicKO} stores reference non-metabolic pathways linked to KO identifiers.
+<<>>=  
+##data in environment variable k2ri
+ls(k2ri)
+@
+
+We can obtain these data in the environment variable \Robject{k2ri} using the function \Rfunction{get}. The following command gets reference metabolic pathways linked to EC identifiers in the variable \Robject{metabolicEC} in R. 
+<<>>=  
+#get all metabolic pathway data
+metabolicEC<-get("metabolicEC",envir=k2ri)
+@
+
+The section will introduce the functions relative to the data management of the environment variable \Robject{k2ri}.
+\subsection{Set or update the current organism and the type of gene identifier}
+When using the pathway analysis functions of iSubpathwayMiner, users need to know the type of organism and identifier in the current study. Users can check the type of organism and identifier in the current study through the function \Rfunction{getOrgAndIdType}:
+<<>>=
+getOrgAndIdType()
+@ 
+
+The result means that the type of organism and identifier in the current study are Homo sapiens and Entrez gene identifiers, which is the default value of the system. Users should ensure that the organism and gene identifiers in the expected study accord with the return value of the function \Rfunction{getOrgAndIdType}. If the result is different from the type of your genes, you need to change them through some functions, e.g., \Rfunction{updateOrgAndIdType} and \Rfunction{loadK2ri}.
+
+The function \Rfunction{updateOrgAndIdType} can download data relative to organism and gene identifiers, and then treat and store them in the environment variable \Robject{k2ri}. The following command can set the type of organism and identifier in the current study as Saccharomyces cerevisiae and sgd identifier in Saccharomyces Genome Database.
+
+<<eval=FALSE>>=
+ updateOrgAndIdType("sce","sgd-sce")
+@
+
+The function \Rfunction{updateCompound} is able to update the variable \Robject{compound} in the environment variable \Robject{k2ri}. The function \Rfunction{updateTaxonomy} is able to update the variable \Robject{taxonomy} in the environment variable \Robject{k2ri}. The variable stores information about organism name and the three- or four-letter KEGG organism code. 
+
+Through these functions, iSubpathwayMiner can support multiple species in KEGG and different gene identifiers (KEGG compound, Entrez Gene IDs, gene official symbol, NCBI-gi IDs, UniProt IDs, PDB IDs, etc.). It can also provide the most up-to-date pathway analysis results for users.
+
+\subsection{Update pathway data}
+The function \Rfunction{updatePathway} can update pathways in the environment variable \Robject{k2ri} from KEGG ftp site. The function \Rfunction{importPathway} can construct the pathway variable metabolicEC, metabolicKO, and nonMetabolicKO from local system. Firstly, users need to download KGML pathway files from KEGG ftp site. They can be obtained from \url{ftp://ftp.genome.jp/pub/kegg/xml/kgml/metabolic/ec}, \url{ftp://ftp.genome.jp/pub/kegg/xml/kgml/metabolic/ko}, and \url{ftp://ftp.genome.jp/pub/kegg/xml/kgml/non-metabolic/ko}.
+
+\subsection{Load and save the environment variable of the system}
+Through the above functions, data in the environment variable of the system can be updated. The system provides two functions (\Rfunction{saveK2ri} and \Rfunction{loadK2ri}) to easily save and load the new environment variable. The following command is used to save the environment variable of Saccharomyces cerevisiae. 
+
+<<eval=FALSE>>=
+saveK2ri("sce_sgd-sce.rda")
+@
+
+When one needs to use the environment variables of Saccharomyces cerevisiae next time, one can use the function \Rfunction{loadK2ri} to load the last environment variable. The following command is used to load the environment variables of Saccharomyces cerevisiae.
+
+<<eval=FALSE>>=
+loadK2ri("sce_sgd-sce.rda")
+@
+
+\newpage
+\section{Session Info}
+The script runs within the following session:
+<<sessionInfo, echo=FALSE, results=verbatim>>=
+sessionInfo()
+@
+
+\begin{thebibliography}{}
+
+\bibitem[Antonov {\it et~al}., 2008]{Antonov2008} Antonov, A.V., et al. (2008) Kegg Spider: Interpretation of Genomics Data in the Context of the Global Gene Metabolic Network. Genome Biol, 9, R179.
+
+\bibitem[Barabasi and Oltvai, 2004]{Barabasi2004} Barabasi, A.L. and Oltvai, Z.N. (2004) Network Biology: Understanding the Cell's Functional Organization. Nat Rev Genet, 5, 101-113.
+
+\bibitem[Csardi and Nepusz, 2006]{Csardi2006} Csardi, G. and Nepusz, T. (2006) The igraph software package for complex network research. InterJournal, Complex Systems, 1695.
+
+
+\bibitem[Draghici {\it et~al}., 2007]{Draghici2007} Draghici, S., et al. (2007) A Systems Biology Approach for Pathway Level Analysis. Genome Res, 17, 1537-1545.
+
+\bibitem[Gentleman {\it et~al}., 2004]{Gentleman2004} Gentleman, R.C., et al. (2004) Bioconductor: Open Software Development for Computational Biology and Bioinformatics. Genome Biol, 5, R80.
+
+\bibitem[Goffard and Weiller, 2007]{Goffard2007} Goffard, N. and Weiller, G. (2007) Pathexpress: A Web-Based Tool to Identify Relevant Pathways in Gene Expression Data. Nucleic Acids Res, 35, W176-181.
+
+\bibitem[Guimera and Nunes Amaral, 2005]{Guimera2005} Guimera, R. and Nunes Amaral, L.A. (2005) Functional Cartography of Complex Metabolic Networks. Nature, 433, 895-900.
+
+\bibitem[Huber {\it et~al}., 2007]{Huber2007}  Huber, W., et al. (2007) Graphs in Molecular Biology. BMC Bioinformatics, 8 Suppl 6, S8.
+
+\bibitem[Hung {\it et~al}., 2010]{Hung2010} Hung, J.H., et al. (2010) Identification of Functional Modules That Correlate with Phenotypic Difference: The Influence of Network Topology. Genome Biol, 11, R23.
+
+\bibitem[Jeong {\it et~al}., 2000]{Jeong2000} Jeong, H., et al. (2000) The Large-Scale Organization of Metabolic Networks. Nature, 407, 651-654.
+
+\bibitem[Kanehisa {\it et~al}., 2006]{Kanehisa2006} Kanehisa, M., et al. (2006) From Genomics to Chemical Genomics: New Developments in Kegg. Nucleic Acids Res, 34, D354-357.
+
+\bibitem[Klukas and Schreiber, 2007]{Klukas2007} Klukas, C. and Schreiber, F. (2007) Dynamic Exploration and Editing of Kegg Pathway Diagrams. Bioinformatics, 23, 344-350.
+
+\bibitem[Koyuturk {\it et~al}., 2004]{Koyuturk2004} Koyuturk, M., et al. (2004) An Efficient Algorithm for Detecting Frequent Subgraphs in Biological Networks. Bioinformatics, 20 Suppl 1, i200-207.
+
+\bibitem[Li {\it et~al}., 2009]{Li2009} Li, C., et al. (2009) Subpathwayminer: A Software Package for Flexible Identification of Pathways. Nucleic Acids Res, 37, e131.
+
+\bibitem[Ogata {\it et~al}., 2000]{Ogata2000} Ogata, H., et al. (2000) A Heuristic Graph Comparison Algorithm and Its Application to Detect Functionally Related Enzyme Clusters. Nucleic Acids Res, 28, 4021-4028.
+
+\bibitem[Schreiber {\it et~al}., 2002]{Schreiber2002} Schreiber, F. (2002) High Quality Visualization of Biochemical Pathways in Biopath. In Silico Biol, 2, 59-73.
+
+\bibitem[Shannon {\it et~al}., 2003]{Shannon2003} Shannon, P., et al. (2003) Cytoscape: A Software Environment for Integrated Models of Biomolecular Interaction Networks. Genome Res, 13, 2498-2504.
+
+\bibitem[Smart {\it et~al}., 2008]{Smart2008} Smart, A.G., et al. (2008) Cascading Failure and Robustness in Metabolic Networks. Proc Natl Acad Sci U S A, 105, 13223-13228.
+
+\bibitem[Strimmer, 2008]{Strimmer2008} Strimmer, K. (2008) fdrtool: a versatile R package for estimating local and tail area-based false discovery rates. Bioinformatics, 24, 1461-1462.
+
+\bibitem[Team , 2004]{Team2008} Team, R.D.C. (2008) R: A Language and Environment for Statistical Computing. R Foundation Statistical Computing.
+
+\bibitem[Xia and Wishart, 2010]{Xia2010} Xia, J. and Wishart, D.S. (2010) Metpa: A Web-Based Metabolomics Tool for Pathway Analysis and Visualization. Bioinformatics, 26, 2342-2344.
+
+\bibitem[Zhang and Wiemann, 2009]{Zhang2009} Zhang, J.D. and Wiemann, S. (2009) Kegggraph: A Graph Approach to Kegg Pathway in R and Bioconductor. Bioinformatics, 25, 1470-1471.
+
+
+
+\end{thebibliography}
+
+\end{document}
