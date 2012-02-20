@@ -1,12 +1,18 @@
-.First.lib<-function(lib, pkgname){
-  #library.dynam(pkgname, pkgname, lib)
-  initializeK2ri()   
-}
+#.First.lib<-function(lib, pkgname){
+#  #library.dynam(pkgname, pkgname, lib)
+#  initializeK2ri()   
+#}
 ########################################################################
 ##initialize data
 initializeK2ri<-function(){
-   data("hsa_ncbi-geneid_k2ri")
+   utils::data("hsa_ncbi-geneid_k2ri",package="iSubpathwayMiner")
 }
+
+#.onLoad <- function(lib, pkgname){
+#  #library.dynam(pkgname, pkgname, lib)
+#  #print("begin")
+#  initializeK2ri()   
+#}
 
 #sampleComponent(10,0)
 ########################################################################
@@ -95,8 +101,10 @@ updateCompound<-function(path="ftp://ftp.genome.jp/pub/kegg/ligand",verbose=TRUE
 #
 updateTaxonomy<-function(path="ftp://ftp.genome.jp/pub/kegg/genes",verbose=TRUE){
       if(verbose==TRUE){
-        print("Note that the programming may be time consumming!")  
+        print("the programming may be time consumming!")  
       }
+      if(verbose==TRUE)
+        print("download compound data.")
      taxonomy<-read.table(paste(path,"/","taxonomy",sep=""),header=FALSE,sep = "\t", quote="\"",fill=TRUE,stringsAsFactors=FALSE)
 	 assign("taxonomy",taxonomy,envir=k2ri)
 }

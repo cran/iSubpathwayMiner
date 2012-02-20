@@ -21,8 +21,9 @@ The function is able to update the variable \code{taxonomy} in the environment v
 
 \examples{
 \dontrun{
+path<-paste(system.file(package="iSubpathwayMiner"),"/localdata",sep="")
 ##update compounds
-updateTaxonomy()
+updateTaxonomy(path)
 }
 }
 \keyword{ file }

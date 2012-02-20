@@ -317,7 +317,7 @@ getNonMetabolicGraph<-function(pathwayList,ambiguousEdgeDirection="bi-directed",
 				   graphics_width=graphics_width,graphics_height=graphics_height,graphics_coords=graphics_coords)
                  Edges<-data.frame(entry1=entry1,entry2=entry2,type=type1,subtype_name=subtype_name,
 				   subtype_value=subtype_value)
-                 graphList[[t]]<-graph.data.frame(Edges,dir=TRUE,Vertices)				 
+                 graphList[[t]]<-graph.data.frame(Edges,directed=TRUE,Vertices)				 
               } 
               graphList[[t]]<-set.graph.attribute(graphList[[t]],"name",pathwayList[[t]]$pathwayAttrs$name)
               graphList[[t]]<-set.graph.attribute(graphList[[t]],"number",pathwayList[[t]]$pathwayAttrs$number)

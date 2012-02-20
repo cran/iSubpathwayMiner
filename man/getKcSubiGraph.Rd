@@ -125,33 +125,6 @@ result<-printGraph(ann)
 result[1:10,c(1,3,4,5)]
 
 
-#############identify matabolic subpathways based on gene and compound sets###########
-###############enzyme-compound###################
-##identify metabolic subpathways based on gene and compound sets
-graphList<-getMetabolicECCOUGraph()
-#get all 8-clique subgraphs
-subGraphList<-getKcSubiGraph(k=8,graphList)
-#get a set of compounds and genes
-componentList<-getExample(geneNumber=1000,compoundNumber=100)
-#annotate gene and compound sets and identify significant graphs
-ann<-identifyGraph(componentList,subGraphList,type="gene_compound")
-#convert ann to data.frame
-result<-printGraph(ann)
-result[1:10,c(1,3,4,5)]
-
-###############KO-compound###################
-##identify metabolic subpathways based on gene and compound sets
-graphList<-getMetabolicKOCOUGraph()
-#get all 8-clique subgraphs
-subGraphList<-getKcSubiGraph(k=8,graphList)
-#get a set of compounds and genes
-componentList<-getExample(geneNumber=1000,compoundNumber=100)
-#annotate gene and compound sets and identify significant graphs
-ann<-identifyGraph(componentList,subGraphList,type="gene_compound")
-#convert ann to data.frame
-result<-printGraph(ann)
-result[1:10,c(1,3,4,5)]
-
 
 }
 }

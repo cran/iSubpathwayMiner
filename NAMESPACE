@@ -10,6 +10,5 @@ import(
   RBGL,
   igraph,
   XML,
-  fdrtool,
   utils
 )

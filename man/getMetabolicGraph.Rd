@@ -89,12 +89,6 @@ index
 
 ##Convert all metabolic pathways to graphs.
 metabolicKO<-get("metabolicKO",envir=k2ri)
-g<-getMetabolicGraph(metabolicKO["ko00130.xml"])
-print(g[[1]],v=TRUE,e=TRUE,g=TRUE)
-
-
-##Convert all metabolic pathways to graphs.
-metabolicKO<-get("metabolicKO",envir=k2ri)
 g<-getMetabolicGraph(metabolicKO)
 print(g[[1]],v=TRUE,e=TRUE,g=TRUE)
 

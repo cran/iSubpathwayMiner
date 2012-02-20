@@ -23,7 +23,7 @@ identifyGraph<-function(componentList,graphList,type="gene",background=getBackgr
 	  if(graphList.length>0){
       for(i in 1:length(graphList)){
             ann<-list(pathwayId=character(),pathwayName="not known",annComponentList=character(),annComponentNumber=0,
-                      annBgComponentList=character(),annBgNumber=0,componentNumber=0,bgNumber=0,pvalue=1,qvalue=1,lfdr=1)
+                      annBgComponentList=character(),annBgNumber=0,componentNumber=0,bgNumber=0,pvalue=1,fdr=1)
 
 			ann$pathwayId<-paste("path:",graphList[[i]]$number,sep="")
             KOList<-unique(unlist(strsplit(unlist(strsplit(V(graphList[[i]])$names," ")),";")))
@@ -89,19 +89,40 @@ identifyGraph<-function(componentList,graphList,type="gene",background=getBackgr
 	  }
 	  if(length(annList)>0){
 	     p_value<-sapply(annList,function(x) return(x$pvalue))
-         fdrtool.List<-fdrtool(p_value,statistic="pvalue",plot=FALSE,verbose=FALSE)	
+         #fdrtool.List<-fdrtool(p_value,statistic="pvalue",plot=FALSE,verbose=FALSE)
+         	 
          #print(fdrtool.List$qval)
-         for(i in seq(annList)){
-            annList[[i]]$qvalue<-fdrtool.List$qval[i]
-			annList[[i]]$lfdr<-fdrtool.List$lfdr[i]
-         }
-		 
+         #for(i in seq(annList)){
+         #   annList[[i]]$qvalue<-fdrtool.List$qval[i]
+		 #	annList[[i]]$lfdr<-fdrtool.List$lfdr[i]
+         #}
+		 fdr.List<-fdr.est(p_value)
+		 for(i in seq(annList)){
+		     annList[[i]]$fdr<-fdr.List[i]
+		 }
          #names(annList)<-sapply(graphList,function(x) x$number)
          annList<-annList[sapply(annList,function(x) x$annComponentNumber>0)]
          annList<-annList[order(sapply(annList,function(x) x[[order]]),decreasing=decreasing)]   
 	  }
 	  return(annList)	
 
+}
+#####################################################################
+fdr.est<-function(p)
+{
+    m <- length(ind <- which(!is.na(p)))
+    fdr <- rep(NA, length(p))
+    stat <- cbind(1:length(p), p, fdr)
+    stat[ind, 3] <- unlist(lapply(stat[ind, 2], function(x) {
+        c <- length(which(stat[ind, 2] <= x))
+        m * x/c
+    }))
+    stat[ind, ] <- stat[ind, ][order(stat[, 2], decreasing = TRUE), 
+        ]
+    stat[ind, 3] <- cummin(stat[ind, 3])
+    fdr <- stat[order(stat[, 1]), 3]
+    fdr[which(fdr > 1)] <- 1
+    return(fdr)
 }
 #####################################################################
 printGraph<-function(ann,detail=FALSE){
@@ -111,12 +132,13 @@ printGraph<-function(ann,detail=FALSE){
       annComponentRatio<-sapply(ann,function(x) paste(x$annComponentNumber,x$componentNumber,sep="/"))
       annBgRatio<-sapply(ann,function(x) paste(x$annBgNumber,x$bgNumber,sep="/"))
       pvalue<-sapply(ann,function(x) x$pvalue)
-      qvalue<-sapply(ann,function(x) x$qvalue)
-	  lfdr<-sapply(ann,function(x) x$lfdr)
+      #qvalue<-sapply(ann,function(x) x$qvalue)
+	  #lfdr<-sapply(ann,function(x) x$lfdr)
+	  fdr<-sapply(ann,function(x) x$fdr)
       #ann.data.frame<-as.data.frame(cbind(pathwayId,pathwayName,annComponentRatio,
       #                       annBgRatio,pvalue,qvalue,lfdr))
       ann.data.frame<-data.frame(pathwayId=pathwayId,pathwayName=pathwayName,annComponentRatio=annComponentRatio,
-	  annBgRatio=annBgRatio,pvalue=pvalue,qvalue=qvalue,lfdr=lfdr,stringsAsFactors=FALSE)							 
+	  annBgRatio=annBgRatio,pvalue=pvalue,fdr=fdr,stringsAsFactors=FALSE)							 
 	  }
 	  else{	 
       pathwayId<-sapply(ann,function(x) x$pathwayId)	  
@@ -126,12 +148,13 @@ printGraph<-function(ann,detail=FALSE){
 	  annComponentRatio<-sapply(ann,function(x) paste(x$annComponentNumber,x$componentNumber,sep="/"))
       annBgRatio<-sapply(ann,function(x) paste(x$annBgNumber,x$bgNumber,sep="/"))
       pvalue<-sapply(ann,function(x) x$pvalue)
-      qvalue<-sapply(ann,function(x) x$qvalue)
-	  lfdr<-sapply(ann,function(x) x$lfdr)
+      #qvalue<-sapply(ann,function(x) x$qvalue)
+	  #lfdr<-sapply(ann,function(x) x$lfdr)
+	  fdr<-sapply(ann,function(x) x$fdr)
       #ann.data.frame<-as.data.frame(cbind(pathwayId,pathwayName,annComponentRatio,
       #                       annBgRatio,pvalue,qvalue,lfdr,annComponentList,annBgComponentList))
       ann.data.frame<-data.frame(pathwayId=pathwayId,pathwayName=pathwayName,annComponentRatio=annComponentRatio,
-	  annBgRatio=annBgRatio,pvalue=pvalue,qvalue=qvalue,lfdr=lfdr,annComponentList=annComponentList,
+	  annBgRatio=annBgRatio,pvalue=pvalue,fdr=fdr,annComponentList=annComponentList,
 	  annBgComponentList=annBgComponentList,stringsAsFactors=FALSE)								 
 	  }
       return(ann.data.frame)

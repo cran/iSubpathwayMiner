@@ -1,5 +1,5 @@
 Package: iSubpathwayMiner
-Version: 1.0
+Version: 2.0
 Title: The package can implement the graph-based reconstruction,
         analyses, and visualization of the KEGG pathways.
 Author: Chunquan Li
@@ -26,14 +26,14 @@ Description: The package can implement the graph-based reconstruction,
         Archaea) and different gene identifiers (KEGG compound, Entrez
         Gene IDs, gene official symbol, NCBI-gi IDs, UniProt IDs, PDB
         IDs, etc.) can also be supported by the system.
-Depends: R (>= 2.10.0),graph(>= 1.24.0),RBGL(>= 1.24.0),igraph(>=
-        0.5.2),XML(>= 3.1-0),fdrtool(>= 1.2.4),utils
+Depends: R (>= 2.10.0),graph,RBGL,igraph,XML,utils
 Collate: initialize.R visualize.R go2go.R pathway.R metabolic.R
         non-metabolic.R metabolic_non-metabolic.R annotation.R
         subpathway-method.R topologicalanalysis.R combindedNetwork.R
         sample.R
+LazyData: Yes
 License: GPL (>= 2)
 biocViews: Statistics, Annotation, Pathways, Graphs, Networks
-Packaged: 2012-01-06 12:28:28 UTC; ripley
+Packaged: 2012-02-20 16:18:22 UTC; Administrator
 Repository: CRAN
-Date/Publication: 2012-01-06 12:29:46
+Date/Publication: 2012-02-20 20:06:23

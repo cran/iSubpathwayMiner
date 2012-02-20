@@ -11,13 +11,13 @@
   \item{type}{A character string. Should be one of "gene", "compound", and "gene_compound".}
 }
 \details{
-The default background are obtained from the environment variable \code{\link{k2ri}}.
+The default background are obtained from the environment variable \code{\link{k2ri}}. For human, reference background of genes is all human genes in KEGG. Reference background of metabolites is all compound in KEGG.
 }
 \value{
    A character vector of background components.
 }
 \author{ Chunquan Li \email{lcqbio@yahoo.com.cn}}
-\seealso{\code{\link{identifyGraph}}}
+\seealso{\code{\link{identifyGraph}},\code{\link{getPrioBackground}}}
 \examples{
 \dontrun{
 

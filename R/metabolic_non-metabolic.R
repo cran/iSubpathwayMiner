@@ -126,7 +126,7 @@ expandNode<-function(graphList,nodeType=c("ortholog","enzyme","gene","compound",
         else{
            E<-data.frame(entry1=entry1,entry2=entry2)
         }
-        expandgraphList[[i]]<-graph.data.frame(E,dir=is.directed(graphList[[i]]),V)
+        expandgraphList[[i]]<-graph.data.frame(E,directed=is.directed(graphList[[i]]),V)
      }else{
         expandgraphList[[i]]<-graph.empty(n=0,directed=is.directed(graphList[[i]]))
         expandgraphList[[i]]<-add.vertices(expandgraphList[[i]],length(name),name=name,id=id,names=names,type=type,reaction=reaction,link=link,graphics_name=graphics_name, 
@@ -265,7 +265,7 @@ mergeNode<-function(graphList,simpleGraph=TRUE){
         else{
            E<-data.frame(entry1=entry1,entry2=entry2)
         }
-       mergegraphList[[i]]<-graph.data.frame(E,dir=is.directed(graphList[[i]]),V)
+       mergegraphList[[i]]<-graph.data.frame(E,directed=is.directed(graphList[[i]]),V)
      }
      else{
         mergegraphList[[i]]<-graph.empty(n=0,directed=is.directed(graphList[[i]]))
@@ -627,7 +627,7 @@ simplifyGraph<-function(graphList,nodeType="geneProduct",directEdge=TRUE,verbose
 		     graphics_height=graphics_height,graphics_coords=graphics_coords)
              edges<-data.frame(entry1=entry1,entry2=entry2,id=Eid,names=Enames,type=Etype,reaction=Ereaction,graphics_name=Egraphics_name)
 		#edges<-unique(edges)	
-             graphList[[i]]<-graph.data.frame(edges,dir=directed,vertex)
+             graphList[[i]]<-graph.data.frame(edges,directed=directed,vertex)
         }else{
              graphList[[i]]<-graph.empty(n=0,directed=directed)
              graphList[[i]]<-add.vertices(graphList[[i]],length(id),name=id,id=id,names=names,type=type,

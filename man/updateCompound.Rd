@@ -22,7 +22,8 @@ The function is able to update the variable \code{compound} in the environment v
 \examples{
 \dontrun{
 ##update compounds
-updateCompound()
+path<-paste(system.file(package="iSubpathwayMiner"),"/localdata",sep="")
+updateCompound(path)
 }
 }
 \keyword{ file }

@@ -46,7 +46,7 @@ identifyTopo<-function(componentList,graphList,type="gene",propertyName="degree"
             ann<-list(pathwayId=character(),pathwayName="not known",annComponentList=character(),annComponentNumber=0,
                       annBgComponentList=character(),annBgNumber=0,componentNumber=0,bgNumber=0,propertyName="not known",
 					  annComponentPropertyValueList=character(),propertyValue=0,annBgComponentPropertyValueList=character(),
-					  bgPropertyValue=0,pvalue=1,qvalue=1,lfdr=1)
+					  bgPropertyValue=0,pvalue=1,fdr=1)
 
 			ann$pathwayId<-paste("path:",graphList[[i]]$number,sep="")
 	        node_names<-lapply(V(graphList[[i]])$names, function(x) unlist(strsplit(x,"[ ;]")))	
@@ -198,13 +198,16 @@ identifyTopo<-function(componentList,graphList,type="gene",propertyName="degree"
 	  if(length(annList)>0){
 	     p_value<-sapply(annList,function(x) return(x$pvalue))
 		 #print(p_value)
-         fdrtool.List<-fdrtool(p_value,statistic="pvalue",plot=FALSE,verbose=FALSE)	
+         #fdrtool.List<-fdrtool(p_value,statistic="pvalue",plot=FALSE,verbose=FALSE)	
          #print(fdrtool.List$qval)
-         for(i in seq(annList)){
-            annList[[i]]$qvalue<-fdrtool.List$qval[i]
-			annList[[i]]$lfdr<-fdrtool.List$lfdr[i]
-         }
-		 
+         #for(i in seq(annList)){
+         #   annList[[i]]$qvalue<-fdrtool.List$qval[i]
+		#	annList[[i]]$lfdr<-fdrtool.List$lfdr[i]
+         #}
+		 fdr.List<-fdr.est(p_value)
+		 for(i in seq(annList)){
+		     annList[[i]]$fdr<-fdr.List[i]
+		 }
          #names(annList)<-sapply(graphList,function(x) x$number)
          annList<-annList[sapply(annList,function(x) x$annComponentNumber>0)]
          annList<-annList[order(sapply(annList,function(x) x[[order]]),decreasing=decreasing)]   
@@ -222,13 +225,13 @@ printTopo<-function(ann,detail=FALSE){
       propertyValue<-sapply(ann,function(x) x$propertyValue) 	 
       bgPropertyValue<-sapply(ann,function(x) x$bgPropertyValue) 	  
       pvalue<-sapply(ann,function(x) x$pvalue)
-      qvalue<-sapply(ann,function(x) x$qvalue)
-	  lfdr<-sapply(ann,function(x) x$lfdr)
+      #qvalue<-sapply(ann,function(x) x$qvalue)
+	  fdr<-sapply(ann,function(x) x$fdr)
       #ann.data.frame<-as.data.frame(cbind(pathwayId,pathwayName,annComponentRatio,
       #                       annBgRatio,pvalue,qvalue,lfdr))
       ann.data.frame<-data.frame(pathwayId=pathwayId,pathwayName=pathwayName,annComponentRatio=annComponentRatio,
 	  annBgRatio=annBgRatio,propertyName=propertyName,propertyValue=propertyValue,bgPropertyValue=bgPropertyValue,
-	  pvalue=pvalue,qvalue=qvalue,lfdr=lfdr,stringsAsFactors=FALSE)							 
+	  pvalue=pvalue,fdr=fdr,stringsAsFactors=FALSE)							 
 	  }
 	  else{	 
       pathwayId<-sapply(ann,function(x) x$pathwayId)	  
@@ -243,13 +246,13 @@ printTopo<-function(ann,detail=FALSE){
       propertyValue<-sapply(ann,function(x) x$propertyValue) 
       bgPropertyValue<-sapply(ann,function(x) x$bgPropertyValue)	  
       pvalue<-sapply(ann,function(x) x$pvalue)
-      qvalue<-sapply(ann,function(x) x$qvalue)
-	  lfdr<-sapply(ann,function(x) x$lfdr)
+      #qvalue<-sapply(ann,function(x) x$qvalue)
+	  fdr<-sapply(ann,function(x) x$fdr)
       #ann.data.frame<-as.data.frame(cbind(pathwayId,pathwayName,annComponentRatio,
       #                       annBgRatio,pvalue,qvalue,lfdr,annComponentList,annBgComponentList))
       ann.data.frame<-data.frame(pathwayId=pathwayId,pathwayName=pathwayName,annComponentRatio=annComponentRatio,
 	  annBgRatio=annBgRatio,propertyName=propertyName,propertyValue=propertyValue,bgPropertyValue=bgPropertyValue,pvalue=pvalue,
-	  qvalue=qvalue,lfdr=lfdr,annComponentList=annComponentList,
+	  fdr=fdr,annComponentList=annComponentList,
 	  annBgComponentList=annBgComponentList,annComponentPropertyValueList,annBgComponentPropertyValueList,stringsAsFactors=FALSE)								 
 	  }	  
       return(ann.data.frame)

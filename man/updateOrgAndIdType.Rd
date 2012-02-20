@@ -23,11 +23,11 @@ Note that if the user don't run the function \code{\link{updateOrgAndIdType}} or
 
 The argument \code{org} must be the abbreviation of a genome name. For example, the hsa, mms, eco, sce and dme is the abbreviation of human, mouse, E.coli, yeast and fluit fly. Detailed information is provided in \url{http://www.genome.jp/kegg/catalog/org_list.html}. The function \code{\link{getOrgIdFromOrgName}} and \code{\link{getOrgNameFromOrgId}} can also provide conversion between organism name and the three- or four-letter KEGG organism code.
 
-The argument \code{idType} is a character string of the type of identifier. The system supports most KEGG cross-reference identifiers such as Entrez gene IDs (idType="ncbi-geneid"), NCBI gi numbers (idType="ncbi-gi"), UniProt accession numbers (idType="uniprot"), etc. Detailed information is provided in \url{ftp://ftp.genome.jp/pub/kegg/genes/organisms}. For example, because a file name in "hsa" file directory is "hsa ensembl-hsa.list", idType="ensembl-hsa" is available as the input identifier type. Note that the \code{idType} is relative to the genome. Different genomes may support different \code{idType}. For example, "sgd-sce" is supported by yeast. However, it is not supported by human.
+The argument \code{idType} is a character string of the type of identifier. The system supports most KEGG cross-reference identifiers such as Entrez gene IDs (idType="ncbi-geneid"), NCBI gi numbers (idType="ncbi-gi"), UniProt accession numbers (idType="uniprot"), etc. Detailed information is provided in KEGG ftp site. For example, because a file name in "hsa" file directory is "hsa ensembl-hsa.list", idType="ensembl-hsa" is available as the input identifier type. Note that the \code{idType} is relative to the genome. Different genomes may support different \code{idType}. For example, "sgd-sce" is supported by yeast. However, it is not supported by human.
 
-The argument \code{path} is the path of file directory of the organism cross-reference identifiers. The default value is "ftp://ftp.genome.jp/pub/kegg/genes/organisms". The setting ensures that the user is able to obtain the up-to-date data from the KEGG FTP site. Of course, the user can also download the organism data of interest from FTP site and change path to the data file for implementing the local update.
+The argument \code{path} is the path of file directory of the organism cross-reference identifiers. The user is able to obtain the up-to-date data from the KEGG FTP site. Of course, the user can also download the organism data of interest from FTP site and change path to the data file for implementing the local update.
 
-Note that the programming may be time consuming. Although the running time of the function is usually less than 2 mins, it depends on your internet connection speed because files need to be downloaded from KEGG ftp site (\url{ftp://ftp.genome.jp/pub/kegg/genes/organisms}).
+Note that the programming may be time consuming. 
 }
 \author{ Chunquan Li \email{lcqbio@yahoo.com.cn}}
 \seealso{\code{\link{getOrgAndIdType}},\code{\link{updatePathway}}, \code{\link{importPathway}}, \code{\link{saveK2ri}}, \code{\link{loadK2ri}}}
@@ -36,9 +36,8 @@ Note that the programming may be time consuming. Although the running time of th
 \dontrun{
 ##update organism and the type of gene identifiers
 getOrgAndIdType()
-updateOrgAndIdType("sce","sgd-sce")
-getOrgAndIdType()
-updateOrgAndIdType("hsa","ncbi-geneid")
+path<-paste(system.file(package="iSubpathwayMiner"),"/localdata",sep="")
+updateOrgAndIdType("sce","sgd-sce",path)
 getOrgAndIdType()
 }
 }

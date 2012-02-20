@@ -19,6 +19,23 @@ getBackground<-function(type="gene"){
 	  }
       return(newBackground)
 }
+####################################################################
+##
+getPrioBackground<-function(type="gene"){
+      if(!exists("k2ri")) initializeK2ri()
+	  if(type=="gene"){
+	  newBackground<-get("genebackground",envir=k2ri)
+	  }
+	  else if(type=="compound"){
+	  newBackground<-get("compbackground",envir=k2ri)
+	  }
+	  else if(type=="gene_compound"){
+	  newBackground1<-get("genebackground",envir=k2ri)
+	  newBackground2<-get("compbackground",envir=k2ri)
+	  newBackground<-c(newBackground1,newBackground2)
+	  }
+      return(newBackground)
+}
 #############################################################
 ##get kegg gene list from gene list
 getKGeneFromGene<-function(geneList){

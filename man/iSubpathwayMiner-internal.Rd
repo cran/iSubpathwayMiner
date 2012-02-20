@@ -14,6 +14,7 @@
 \alias{getEdgeLabel}
 \alias{getEdgeLty}
 \alias{getLayout}
+\alias{fdr.est}
 \title{iSubpathwayMiner internal functions}
 \description{
   These are functions internally called by other functions in the package \code{iSubpathwayMiner} and not meant to be called by the user.
@@ -34,6 +35,7 @@ getUnknowSubstrate()
 getUnknowProduct()
 getEdgeLabel(graph)
 getEdgeLty(graph)
+fdr.est(p)
 }
 
 \author{ Chunquan Li \email{lcqbio@yahoo.com.cn}}

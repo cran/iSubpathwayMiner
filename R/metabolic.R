@@ -265,7 +265,7 @@ getMetabolicGraph<-function(pathwayList,verbose=FALSE){
              edges<-data.frame()
              edges<-data.frame(entry1,entry2)
              edges<-unique(edges)
-             graphList[[t]]<-graph.data.frame(edges,dir=TRUE,vertices)
+             graphList[[t]]<-graph.data.frame(edges,directed=TRUE,vertices)
     }
     else{
              graphList[[t]]<-graph.empty(n=0,directed=TRUE)
