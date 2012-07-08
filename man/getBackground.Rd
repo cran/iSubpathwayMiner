@@ -14,7 +14,7 @@
 The default background are obtained from the environment variable \code{\link{k2ri}}. For human, reference background of genes is all human genes in KEGG. Reference background of metabolites is all compound in KEGG.
 }
 \value{
-   A character vector of background components.
+   A character vector of background molecules.
 }
 \author{ Chunquan Li \email{lcqbio@yahoo.com.cn}}
 \seealso{\code{\link{identifyGraph}},\code{\link{getPrioBackground}}}
@@ -28,7 +28,7 @@ backgroundGene<-getBackground(type="gene")
 backgroundCompound<-getBackground(type="compound")
 
 ##get all background compounds and genes
-backgroundComponent<-getBackground(type="gene_compound")
+backgroundMolecule<-getBackground(type="gene_compound")
 
 }
 }

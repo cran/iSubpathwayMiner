@@ -14,7 +14,7 @@
 \details{
 The function \code{getKcSubiGraph} uses the k-clique concept in social network analysis to mine subpathways. In social network analysis, a k-clique in a graph is a subgraph where the distance between any two nodes is no greater than k. 
 
-The k-cliques-based method to identify subpathways firstly divide entire pathways to subpathways according to the parameter k. Secondly, the identifier of each subpathway is given with its pathway identifier plus a subpathway number. For each subpathway (k-clique), distance among nodes within it is no greater than the parameter k (a user-defined distance). Component sets can then be annotated to these subpathways. Finally, the significantly enriched subpathways can be identified using hypergeometric test.
+The k-cliques-based method to identify subpathways firstly divide entire pathways to subpathways according to the parameter k. Secondly, the identifier of each subpathway is given with its pathway identifier plus a subpathway number. For each subpathway (k-clique), distance among nodes within it is no greater than the parameter k (a user-defined distance). Molecule sets can then be annotated to these subpathways. Finally, the significantly enriched subpathways can be identified using hypergeometric test.
 
 Note that the k-clique subpathway identification method is flexible for choice of pathway data. When we choose the pathway data obtained from the function \code{\link{getMetabolicECECUEMGraph}}, the subpathway identification method corresponds to that in the SubpathwayMiner system.
 
@@ -52,16 +52,16 @@ result
 #output of results
 write.table(result,file="result.txt",row.names=FALSE,sep="\t")
 
-###metaboli subpathway identification method in the SubpathwayMiner system###
+###metabolic subpathway identification method in the SubpathwayMiner system###
 #get undirected metabolic pathway graphs with enzymes as nodes and compounds as edges
 #each node contains only one enzyme and each enzyme only appear once.
 graphList<-getMetabolicECECUEMGraph()
 #get all 4-clique subgraphs
 subGraphList<-getKcSubiGraph(k=4,graphList)
 ##get a set of compounds and genes
-componentList<-getExample(geneNumber=1000,compoundNumber=0)
+moleculeList<-getExample(geneNumber=1000,compoundNumber=0)
 #annotate gene sets and identify significant subpathways
-ann<-identifyGraph(componentList,subGraphList,type="gene")
+ann<-identifyGraph(moleculeList,subGraphList,type="gene")
 result<-printGraph(ann)
 
 ###############KO-KO###################

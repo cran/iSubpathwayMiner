@@ -1,10 +1,10 @@
 ####################################################################
 ##get KO sub-pathway annotation
-identifyGraph<-function(componentList,graphList,type="gene",background=getBackground(type),
+identifyGraph<-function(moleculeList,graphList,type="gene",background=getBackground(type),
    order="pvalue",decreasing=FALSE,locateOrg=TRUE,ignoreAmbiguousEnzyme=TRUE){
-      if(typeof(componentList)!="character"){
-	  print("warning: your componentList must be 'character' vector. Because the type of your current componentList is not correct, it has been conveted arbitrarily using the function as.character().")
-	  componentList<-as.character(componentList)
+      if(typeof(moleculeList)!="character"){
+	  print("warning: your moleculeList must be 'character' vector. Because the type of your current moleculeList is not correct, it has been conveted arbitrarily using the function as.character().")
+	  moleculeList<-as.character(moleculeList)
 	  }
       if(!exists("k2ri")) initializeK2ri()
 	  graphList.length<-length(graphList)
@@ -22,8 +22,8 @@ identifyGraph<-function(componentList,graphList,type="gene",background=getBackgr
       annList<-list()
 	  if(graphList.length>0){
       for(i in 1:length(graphList)){
-            ann<-list(pathwayId=character(),pathwayName="not known",annComponentList=character(),annComponentNumber=0,
-                      annBgComponentList=character(),annBgNumber=0,componentNumber=0,bgNumber=0,pvalue=1,fdr=1)
+            ann<-list(pathwayId=character(),pathwayName="not known",annMoleculeList=character(),annMoleculeNumber=0,
+                      annBgMoleculeList=character(),annBgNumber=0,moleculeNumber=0,bgNumber=0,pvalue=1,fdr=1)
 
 			ann$pathwayId<-paste("path:",graphList[[i]]$number,sep="")
             KOList<-unique(unlist(strsplit(unlist(strsplit(V(graphList[[i]])$names," ")),";")))
@@ -58,31 +58,31 @@ identifyGraph<-function(componentList,graphList,type="gene",background=getBackgr
 			graphCompoundList<-unique(substring(graphCompoundList,5))
 	   }
 	   if(type=="gene_compound"){
-	        graphComponentList<-c(graphGeneList,graphCompoundList)
+	        graphMoleculeList<-c(graphGeneList,graphCompoundList)
 	   }
 	   else if(type=="gene"){
-	        graphComponentList<-graphGeneList   
+	        graphMoleculeList<-graphGeneList   
 	   }
 	   else if(type=="compound"){
-	        graphComponentList<-graphCompoundList  	   
+	        graphMoleculeList<-graphCompoundList  	   
 	   }
-       annotatedComponentList<-intersect(graphComponentList,componentList)
-	   annotatedBackgroundList<-intersect(graphComponentList,background)	
+       annotatedMoleculeList<-intersect(graphMoleculeList,moleculeList)
+	   annotatedBackgroundList<-intersect(graphMoleculeList,background)	
             
             pathwayName<-graphList[[i]]$title
             if(length(pathwayName)!=0)
                 ann$pathwayName<-pathwayName
-            ann$annComponentList<-annotatedComponentList 
+            ann$annMoleculeList<-annotatedMoleculeList 
          
-            ann$annComponentNumber<-length(annotatedComponentList)
-			ann$annBgComponentList<-annotatedBackgroundList
+            ann$annMoleculeNumber<-length(annotatedMoleculeList)
+			ann$annBgMoleculeList<-annotatedBackgroundList
             ann$annBgNumber<-length(annotatedBackgroundList)
 
-            ann$componentNumber<-length(componentList)
+            ann$moleculeNumber<-length(moleculeList)
             ann$bgNumber<-length(background)
 
-            ann$pvalue<-1-phyper(ann$annComponentNumber-1,ann$annBgNumber,
-                 ann$bgNumber-ann$annBgNumber,ann$componentNumber)
+            ann$pvalue<-1-phyper(ann$annMoleculeNumber-1,ann$annBgNumber,
+                 ann$bgNumber-ann$annBgNumber,ann$moleculeNumber)
             
             annList[[i]]<-ann
       } 
@@ -101,7 +101,7 @@ identifyGraph<-function(componentList,graphList,type="gene",background=getBackgr
 		     annList[[i]]$fdr<-fdr.List[i]
 		 }
          #names(annList)<-sapply(graphList,function(x) x$number)
-         annList<-annList[sapply(annList,function(x) x$annComponentNumber>0)]
+         annList<-annList[sapply(annList,function(x) x$annMoleculeNumber>0)]
          annList<-annList[order(sapply(annList,function(x) x[[order]]),decreasing=decreasing)]   
 	  }
 	  return(annList)	
@@ -129,33 +129,33 @@ printGraph<-function(ann,detail=FALSE){
 	  if(detail==FALSE){
 	  pathwayId<-sapply(ann,function(x) x$pathwayId)
       pathwayName<-sapply(ann,function(x) x$pathwayName)
-      annComponentRatio<-sapply(ann,function(x) paste(x$annComponentNumber,x$componentNumber,sep="/"))
+      annMoleculeRatio<-sapply(ann,function(x) paste(x$annMoleculeNumber,x$moleculeNumber,sep="/"))
       annBgRatio<-sapply(ann,function(x) paste(x$annBgNumber,x$bgNumber,sep="/"))
       pvalue<-sapply(ann,function(x) x$pvalue)
       #qvalue<-sapply(ann,function(x) x$qvalue)
 	  #lfdr<-sapply(ann,function(x) x$lfdr)
 	  fdr<-sapply(ann,function(x) x$fdr)
-      #ann.data.frame<-as.data.frame(cbind(pathwayId,pathwayName,annComponentRatio,
+      #ann.data.frame<-as.data.frame(cbind(pathwayId,pathwayName,annMoleculeRatio,
       #                       annBgRatio,pvalue,qvalue,lfdr))
-      ann.data.frame<-data.frame(pathwayId=pathwayId,pathwayName=pathwayName,annComponentRatio=annComponentRatio,
+      ann.data.frame<-data.frame(pathwayId=pathwayId,pathwayName=pathwayName,annMoleculeRatio=annMoleculeRatio,
 	  annBgRatio=annBgRatio,pvalue=pvalue,fdr=fdr,stringsAsFactors=FALSE)							 
 	  }
 	  else{	 
       pathwayId<-sapply(ann,function(x) x$pathwayId)	  
 	  pathwayName<-sapply(ann,function(x) x$pathwayName)
-	  annComponentList<-sapply(ann, function(x){ paste(x$annComponentList,collapse=";") })
-      annBgComponentList<-sapply(ann, function(x){ paste(x$annBgComponentList,collapse=";")})
-	  annComponentRatio<-sapply(ann,function(x) paste(x$annComponentNumber,x$componentNumber,sep="/"))
+	  annMoleculeList<-sapply(ann, function(x){ paste(x$annMoleculeList,collapse=";") })
+      annBgMoleculeList<-sapply(ann, function(x){ paste(x$annBgMoleculeList,collapse=";")})
+	  annMoleculeRatio<-sapply(ann,function(x) paste(x$annMoleculeNumber,x$moleculeNumber,sep="/"))
       annBgRatio<-sapply(ann,function(x) paste(x$annBgNumber,x$bgNumber,sep="/"))
       pvalue<-sapply(ann,function(x) x$pvalue)
       #qvalue<-sapply(ann,function(x) x$qvalue)
 	  #lfdr<-sapply(ann,function(x) x$lfdr)
 	  fdr<-sapply(ann,function(x) x$fdr)
-      #ann.data.frame<-as.data.frame(cbind(pathwayId,pathwayName,annComponentRatio,
-      #                       annBgRatio,pvalue,qvalue,lfdr,annComponentList,annBgComponentList))
-      ann.data.frame<-data.frame(pathwayId=pathwayId,pathwayName=pathwayName,annComponentRatio=annComponentRatio,
-	  annBgRatio=annBgRatio,pvalue=pvalue,fdr=fdr,annComponentList=annComponentList,
-	  annBgComponentList=annBgComponentList,stringsAsFactors=FALSE)								 
+      #ann.data.frame<-as.data.frame(cbind(pathwayId,pathwayName,annMoleculeRatio,
+      #                       annBgRatio,pvalue,qvalue,lfdr,annMoleculeList,annBgMoleculeList))
+      ann.data.frame<-data.frame(pathwayId=pathwayId,pathwayName=pathwayName,annMoleculeRatio=annMoleculeRatio,
+	  annBgRatio=annBgRatio,pvalue=pvalue,fdr=fdr,annMoleculeList=annMoleculeList,
+	  annBgMoleculeList=annBgMoleculeList,stringsAsFactors=FALSE)								 
 	  }
       return(ann.data.frame)
 }

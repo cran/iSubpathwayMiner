@@ -1,11 +1,11 @@
-\name{sampleComponent}
-\alias{sampleComponent}
-\title{Generate a random component set}
+\name{sampleMolecule}
+\alias{sampleMolecule}
+\title{Generate a random molecule set}
 \description{
-  Generate a random component set.
+  Generate a random molecule set.
 }
 \usage{
- sampleComponent(geneNumber=1000,compoundNumber=0)
+ sampleMolecule(geneNumber=1000,compoundNumber=0)
 }
 \arguments{
   \item{geneNumber}{An integer. Set numbers of genes returned from the function.}
@@ -20,13 +20,13 @@ A vector of character.
 \examples{
 \dontrun{
 ##get an example of gene sets
-geneList<-sampleComponent(10,0)
+geneList<-sampleMolecule(10,0)
 
 ##get an example of compound sets
-compoundList<-sampleComponent(0,10)
+compoundList<-sampleMolecule(0,10)
 
-##get an example of component sets
-componentList<-sampleComponent(5,5)
+##get an example of molecule sets
+moleculeList<-sampleMolecule(5,5)
 }
 }
 \keyword{ file }

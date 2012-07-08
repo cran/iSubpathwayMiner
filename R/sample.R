@@ -2,65 +2,65 @@
 ##get an example
 getExample<-function(geneNumber=1000,compoundNumber=0){
    if(!exists("k2ri")) initializeK2ri()
-     componentList<-character()
+     moleculeList<-character()
    	 gene2path<-get("gene2path",envir=k2ri)
 	 allGene1<-getGeneFromKGene(as.character(gene2path[,1]))
      allGene2<-unique(get("compound",envir=k2ri))
-	 componentList1<-character()
+	 moleculeList1<-character()
 	 if(geneNumber<=0){}
      else{
      if(geneNumber<=length(allGene1)){
-       componentList1<-allGene1[1:geneNumber]
+       moleculeList1<-allGene1[1:geneNumber]
      }
      else{
-       componentList1<-allGene1
+       moleculeList1<-allGene1
      }
 	 }
-	 componentList2<-character()
+	 moleculeList2<-character()
 	 if(compoundNumber<=0){}
 	 else{
      if(compoundNumber<=length(allGene2)){
-       componentList2<-allGene2[1:compoundNumber]
+       moleculeList2<-allGene2[1:compoundNumber]
      }
      else{
-       componentList2<-allGene2
+       moleculeList2<-allGene2
      }	
      }	 
-	 componentList<-c(componentList1,componentList2)
-     return(componentList)
+	 moleculeList<-c(moleculeList1,moleculeList2)
+     return(moleculeList)
    
 }
-#componentList<-getAexample(k=1000)
+#moleculeList<-getAexample(k=1000)
 
 ###########################################################################
 ##sample
-sampleComponent<-function(geneNumber=1000,compoundNumber=0){
+sampleMolecule<-function(geneNumber=1000,compoundNumber=0){
    if(!exists("k2ri")) initializeK2ri()
-     componentList<-character()
+     moleculeList<-character()
    	 gene2path<-get("gene2path",envir=k2ri)
 	 allGene1<-getGeneFromKGene(as.character(gene2path[,1]))
      allGene2<-unique(get("compound",envir=k2ri))
-	 componentList1<-character()
+	 moleculeList1<-character()
 	 if(geneNumber<=0){}
      else{
      if(geneNumber<=length(allGene1)){
-       componentList1<-sample(allGene1,geneNumber)
+       moleculeList1<-sample(allGene1,geneNumber)
      }
      else{
-       componentList1<-allGene1
+       moleculeList1<-allGene1
      }
 	 }
-	 componentList2<-character()
+	 moleculeList2<-character()
 	 if(compoundNumber<=0){}
 	 else{
      if(compoundNumber<=length(allGene2)){
-       componentList2<-sample(allGene2,compoundNumber)
+       moleculeList2<-sample(allGene2,compoundNumber)
      }
      else{
-       componentList2<-allGene2
+       moleculeList2<-allGene2
      }	
      }	 
-	 componentList<-c(componentList1,componentList2)
-     return(componentList)
+	 moleculeList<-c(moleculeList1,moleculeList2)
+     return(moleculeList)
    
 }

@@ -22,15 +22,15 @@ getKcSubiGraph<-function(k=4,graphList){
             else{
                   kkc<-kc[[length(kc)]]
             }
-            node_name<-V(graphList[[i]])$name      #new!
-			V_seq<-seq(0,vcount(graphList[[i]])-1)  #new!
+            node_name<-V(graphList[[i]])$name      
+			V_seq<-seq(1,vcount(graphList[[i]]))  #new!important
             for(j in 1:length(kkc)){
                   subGraphIndex<-subGraphIndex+1
 				  #index<-V(graphList[[i]])[V(graphList[[i]])$name %in% kkc[[j]]] 
 				  #print(kkc[[j]])
-				  index<-V_seq[node_name %in% kkc[[j]]]		#new!	
+				  index<-V_seq[node_name %in% kkc[[j]]]		
 				  #print(index)
-                  subGraph[[subGraphIndex]]<-subgraph(graphList[[i]],index)
+                  subGraph[[subGraphIndex]]<-induced.subgraph(graphList[[i]],index)
                   subGraph[[subGraphIndex]]$number<-paste(subGraph[[subGraphIndex]]$number,j,sep="_")
 				  names(subGraph)[subGraphIndex]<-subGraph[[subGraphIndex]]$number
             }

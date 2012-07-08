@@ -14,7 +14,7 @@ initializeK2ri<-function(){
 #  initializeK2ri()   
 #}
 
-#sampleComponent(10,0)
+#sampleMolecule(10,0)
 ########################################################################
 ##update org and idType
 #updateOrgAndIdType("hsa","symbol")

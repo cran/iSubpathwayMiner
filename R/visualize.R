@@ -139,6 +139,8 @@ for(i in seq(edge.name)){
      edge.lty[i]<-"longdash"
   }
 }
+#new!
+if(length(edge.lty)==0) edge.lty="solid"
 return(edge.lty)
 }
 #pathwayId<-c("path:00230","path:00010")
@@ -165,22 +167,23 @@ plotAnnGraph<-function(pathwayId,graphList,ann,gotoKEGG=FALSE,orgSpecific=TRUE,m
          org<-org_idType[1]
 		 
          #ann[sapply(ann,function(x) ifelse(x$pathwayId==pathwayId,TRUE,FALSE))]
-         annComponentList<-ann[sapply(ann,function(x) ifelse(x$pathwayId==pathwayId[i],TRUE,FALSE))][[1]]$annComponentList
+         annMoleculeList<-ann[sapply(ann,function(x) ifelse(x$pathwayId==pathwayId[i],TRUE,FALSE))][[1]]$annMoleculeList
+
          
 		 KOList<-""
          if(org=="ec"){
-            KOList<-getEnzymeFromGene(annComponentList)
+            KOList<-getEnzymeFromGene(annMoleculeList)
          }else if(org=="ko"){
-            KOList<-getKOFromGene(annComponentList)
+            KOList<-getKOFromGene(annMoleculeList)
          }else if(org==getOrgAndIdType()[1]){
 			if(length(org_idType)==2){
 				 if(org_idType[2]==getOrgAndIdType()[2]){
-					 KOList<-annComponentList
+					 KOList<-annMoleculeList
 				}
 		        else{stop(paste("graph ",i,"  error: it is not ec, ko, or current org graph.",sep=""))}
 		    }
 		    else{
-			     KOList<-getKGeneFromGene(annComponentList)
+			     KOList<-getKGeneFromGene(annMoleculeList)
 			}
 		}
 		else{stop(paste("graph ",i,"  error: it is not ec, ko, or current org graph.",sep=""))}	 
@@ -188,7 +191,7 @@ plotAnnGraph<-function(pathwayId,graphList,ann,gotoKEGG=FALSE,orgSpecific=TRUE,m
 		 
 		 
 		 compound<-unique(get("compound",envir=k2ri))
-         annCompoundList<-intersect(compound,annComponentList)
+         annCompoundList<-intersect(compound,annMoleculeList)
 		 
 		if(displayInR==TRUE){
              annCompoundList1<-paste("cpd:",annCompoundList,sep="")
@@ -202,7 +205,7 @@ plotAnnGraph<-function(pathwayId,graphList,ann,gotoKEGG=FALSE,orgSpecific=TRUE,m
 		     limit.length<-250
              if(orgSpecific==TRUE){
 	             org<-getOrgAndIdType()[1]
-	             annGeneList<-sapply(strsplit(getKGeneFromGene(annComponentList),":"), function(x) x[2])
+	             annGeneList<-sapply(strsplit(getKGeneFromGene(annMoleculeList),":"), function(x) x[2])
 	             temp<- paste(c(paste(org,entireNewPathwayId[i],sep=""),annGeneList,annCompoundList),sep="",collapse="+")
                  url <- paste("http://www.genome.ad.jp/dbget-bin/show_pathway?",temp,sep="")
 	             #print(url)

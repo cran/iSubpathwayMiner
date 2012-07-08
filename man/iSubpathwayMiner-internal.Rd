@@ -15,6 +15,7 @@
 \alias{getEdgeLty}
 \alias{getLayout}
 \alias{fdr.est}
+\alias{getOneNodePath}
 \title{iSubpathwayMiner internal functions}
 \description{
   These are functions internally called by other functions in the package \code{iSubpathwayMiner} and not meant to be called by the user.
@@ -36,6 +37,8 @@ getUnknowProduct()
 getEdgeLabel(graph)
 getEdgeLty(graph)
 fdr.est(p)
+getOneNodePath(current_node,other_nodes,pathway,n,all_shortest_paths_length,directed,method="shortestPaths")
+
 }
 
 \author{ Chunquan Li \email{lcqbio@yahoo.com.cn}}

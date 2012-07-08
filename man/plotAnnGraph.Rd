@@ -21,7 +21,7 @@
   \item{...}{ The arguments passed to or from methods. See \code{\link{plotGraph}}, \code{\link{plot.igraph}} and see \code{\link{plot}}.}  
 }
 \details{
-The function can visualize the annotated pathway (or subpathways) graphs. The red nodes in the result graph represent the nodes which include the submitted components.
+The function can visualize the annotated pathway (or subpathways) graphs. The red nodes in the result graph represent the nodes which include the submitted molecules.
 }
 \author{ Chunquan Li \email{lcqbio@yahoo.com.cn}}
 \seealso{\code{\link{plotGraph}},\code{\link{identifyGraph}},\code{\link{printGraph}}}

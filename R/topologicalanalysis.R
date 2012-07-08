@@ -1,10 +1,10 @@
 ####################################################################
 ##get KO sub-pathway annotation
-identifyTopo<-function(componentList,graphList,type="gene",propertyName="degree",order="pvalue",decreasing=FALSE,degree.mode="total",loops = TRUE,betweenness.directed=TRUE,clusteringCoefficient.type="local",closeness.mode="all",locateOrg=TRUE,ignoreAmbiguousEnzyme=TRUE,alternative="two.sided",background=getBackground(type)){
+identifyTopo<-function(moleculeList,graphList,type="gene",propertyName="degree",order="pvalue",decreasing=FALSE,degree.mode="total",loops = TRUE,betweenness.directed=TRUE,clusteringCoefficient.type="local",closeness.mode="all",locateOrg=TRUE,ignoreAmbiguousEnzyme=TRUE,alternative="two.sided",background=getBackground(type)){
       #print(Sys.time())
-      if(typeof(componentList)!="character"){
-	  print("warning: your componentList must be 'character' vector. Because the type of your current componentList is not correct, it has been conveted arbitrarily using the function as.character().")
-	  componentList<-as.character(componentList)
+      if(typeof(moleculeList)!="character"){
+	  print("warning: your moleculeList must be 'character' vector. Because the type of your current moleculeList is not correct, it has been conveted arbitrarily using the function as.character().")
+	  moleculeList<-as.character(moleculeList)
 	  }
       if(!exists("k2ri")) initializeK2ri()
 	  graphList.length<-length(graphList)
@@ -20,32 +20,32 @@ identifyTopo<-function(componentList,graphList,type="gene",propertyName="degree"
 		 }
 	  }
 	  
-	  componentList_all<-list()
-	  componentList_all[[1]]<-componentList	
-      compound_length<-length(componentList[substring(componentList,0,1)=="C"])
-	  componentList_length<-length(componentList)
+	  moleculeList_all<-list()
+	  moleculeList_all[[1]]<-moleculeList	
+      compound_length<-length(moleculeList[substring(moleculeList,0,1)=="C"])
+	  moleculeList_length<-length(moleculeList)
 	  randomNumber<-0
 	  if(randomNumber>0){
 	    if(type=="gene"){
 		     for(i in 1:randomNumber){
-		     componentList_all[[i+1]]<-sampleComponent(componentList_length,0)
+		     moleculeList_all[[i+1]]<-sampleMolecule(moleculeList_length,0)
 			 }
 		}else if(type=="compound"){
 		     for(i in 1:randomNumber){
-		     componentList_all[[i+1]]<-sampleComponent(0,componentList_length)
+		     moleculeList_all[[i+1]]<-sampleMolecule(0,moleculeList_length)
 			 }
 		}else if (type=="gene_compound"){
 		     for(i in 1:randomNumber){
-		     componentList_all[[i+1]]<-sampleComponent(componentList_length-compound_length,compound_length)
+		     moleculeList_all[[i+1]]<-sampleMolecule(moleculeList_length-compound_length,compound_length)
 			 }		
 		}
 	  }
       annList<-list()
       for(i in 1:length(graphList)){
 	  #print(paste("number",i))
-            ann<-list(pathwayId=character(),pathwayName="not known",annComponentList=character(),annComponentNumber=0,
-                      annBgComponentList=character(),annBgNumber=0,componentNumber=0,bgNumber=0,propertyName="not known",
-					  annComponentPropertyValueList=character(),propertyValue=0,annBgComponentPropertyValueList=character(),
+            ann<-list(pathwayId=character(),pathwayName="not known",annMoleculeList=character(),annMoleculeNumber=0,
+                      annBgMoleculeList=character(),annBgNumber=0,moleculeNumber=0,bgNumber=0,propertyName="not known",
+					  annMoleculePropertyValueList=character(),propertyValue=0,annBgMoleculePropertyValueList=character(),
 					  bgPropertyValue=0,pvalue=1,fdr=1)
 
 			ann$pathwayId<-paste("path:",graphList[[i]]$number,sep="")
@@ -82,22 +82,22 @@ identifyTopo<-function(componentList,graphList,type="gene",propertyName="degree"
 			graphCompoundList<-unique(substring(graphCompoundList,5))
 	   }
 	   if(type=="gene_compound"){
-	        graphComponentList<-c(graphGeneList,graphCompoundList)
+	        graphMoleculeList<-c(graphGeneList,graphCompoundList)
 	   }
 	   else if(type=="gene"){
-	        graphComponentList<-graphGeneList   
+	        graphMoleculeList<-graphGeneList   
 	   }
 	   else if(type=="compound"){
-	        graphComponentList<-graphCompoundList  	   
+	        graphMoleculeList<-graphCompoundList  	   
 	   }
-       #annotatedComponentList<-intersect(graphComponentList,componentList)	
+       #annotatedMoleculeList<-intersect(graphMoleculeList,moleculeList)	
 	   
-	   annotatedComponentList_all<-list()
-	   for(k in seq(componentList_all)){
-            annotatedComponentList_all[[k]]<-intersect(graphComponentList,componentList_all[[k]])	
+	   annotatedMoleculeList_all<-list()
+	   for(k in seq(moleculeList_all)){
+            annotatedMoleculeList_all[[k]]<-intersect(graphMoleculeList,moleculeList_all[[k]])	
        }
 	   
-	   if(length(annotatedComponentList_all[[1]])>0){
+	   if(length(annotatedMoleculeList_all[[1]])>0){
        #计算一个图中每个结点的属性值存入graph_node_propertyValue中。	   
 	   graph_node_propertyValue<-0
 	    if (propertyName=="degree"){
@@ -110,12 +110,12 @@ identifyTopo<-function(componentList,graphList,type="gene",propertyName="degree"
 	    }else if(propertyName=="closeness"){#Closeness centrality 
 			graph_node_propertyValue<-closeness(graphList[[i]],mode=closeness.mode)	 
 	    }	
-		#get all components in a pathway graph
-		annotatedBackgroundList<-intersect(graphComponentList,background)
-		#calculate property value of all components
+		#get all molecules in a pathway graph
+		annotatedBackgroundList<-intersect(graphMoleculeList,background)
+		#calculate property value of all molecules
         #每一个组分可能对应多个结点。计算该组分每个结点的属性值存入node_propertyValue中。
-	    #然后取平均值作为该组分的属性值存入component_degree。			 
-            component_propertyValue<-0
+	    #然后取平均值作为该组分的属性值存入molecule_degree。			 
+            molecule_propertyValue<-0
             for(j in seq(annotatedBackgroundList)){
 			     annNodeList<-character()
 			     if(substring(annotatedBackgroundList[j],0,1)=="C"){
@@ -147,50 +147,49 @@ identifyTopo<-function(componentList,graphList,type="gene",propertyName="degree"
                  hit<-sapply(node_names, function(x) ifelse(any(x %in% annNodeList),TRUE,FALSE))
                  node_propertyValue<-0
 				 node_propertyValue<-graph_node_propertyValue[hit]
-				 component_propertyValue[j]<-mean(node_propertyValue)
+				 molecule_propertyValue[j]<-mean(node_propertyValue)
 			}
-		#求真实和所有随机的情趣组分集合在该通路的平均属性值
-		#然后对注释进通路内的每个情趣组分求属性值，取平均值作为组分集合在该通路中的属性值ann$propertyValue。	
+	
 	    #propertyValue_all<-0
 	    propertyValue_all_list<-list()
-	    for(k in seq(annotatedComponentList_all)){
-	        hit_k<-annotatedBackgroundList%in%annotatedComponentList_all[[k]]
-			#print(annotatedComponentList_all[[k]])
+	    for(k in seq(annotatedMoleculeList_all)){
+	        hit_k<-annotatedBackgroundList%in%annotatedMoleculeList_all[[k]]
+			#print(annotatedMoleculeList_all[[k]])
 			#print(annotatedBackgroundList)
 			#print(Sys.time())
-			component_propertyValue_k<-component_propertyValue[hit_k]
-			#propertyValue_all[k]<-mean(component_propertyValue_k)
+			molecule_propertyValue_k<-molecule_propertyValue[hit_k]
+			#propertyValue_all[k]<-mean(molecule_propertyValue_k)
 			#
-            propertyValue_all_list[[k]]<-component_propertyValue_k
+            propertyValue_all_list[[k]]<-molecule_propertyValue_k
             
         } 
 			
             pathwayName<-graphList[[i]]$title
             if(length(pathwayName)!=0)
                 ann$pathwayName<-pathwayName
-            ann$annComponentList<-annotatedComponentList_all[[1]] 
-            ann$annComponentNumber<-length(annotatedComponentList_all[[1]])
+            ann$annMoleculeList<-annotatedMoleculeList_all[[1]] 
+            ann$annMoleculeNumber<-length(annotatedMoleculeList_all[[1]])
 			
 
-			ann$annBgComponentList<-annotatedBackgroundList
+			ann$annBgMoleculeList<-annotatedBackgroundList
             ann$annBgNumber<-length(annotatedBackgroundList)
-	        ann$componentNumber<-length(componentList)			
+	        ann$moleculeNumber<-length(moleculeList)			
             ann$bgNumber<-length(background)
 
 			
 			ann$propertyName<-propertyName		
-			ann$annComponentPropertyValueList<-propertyValue_all_list[[1]]
-			ann$annBgComponentPropertyValueList<-component_propertyValue			
+			ann$annMoleculePropertyValueList<-propertyValue_all_list[[1]]
+			ann$annBgMoleculePropertyValueList<-molecule_propertyValue			
 			ann$propertyValue<-mean(propertyValue_all_list[[1]])
-			ann$bgPropertyValue<-mean(component_propertyValue)
+			ann$bgPropertyValue<-mean(molecule_propertyValue)
 			#print(i)
 			#print(propertyValue_all_list[[1]])	
-			#print(component_propertyValue)
-			test<-wilcox.test(propertyValue_all_list[[1]],component_propertyValue,correct = FALSE,exact = FALSE,alternative=alternative)$p.value
+			#print(molecule_propertyValue)
+			test<-wilcox.test(propertyValue_all_list[[1]],molecule_propertyValue,correct = FALSE,exact = FALSE,alternative=alternative)$p.value
 			if(!is.na(test)){
 			   ann$pvalue<-test
 			}
-	  }	#end if(length(annotatedComponentList_all[[1]])>0){
+	  }	#end if(length(annotatedMoleculeList_all[[1]])>0){
             annList[[i]]<-ann	  
 	  #print(paste(Sys.time(),"end"))
 	  }
@@ -209,7 +208,7 @@ identifyTopo<-function(componentList,graphList,type="gene",propertyName="degree"
 		     annList[[i]]$fdr<-fdr.List[i]
 		 }
          #names(annList)<-sapply(graphList,function(x) x$number)
-         annList<-annList[sapply(annList,function(x) x$annComponentNumber>0)]
+         annList<-annList[sapply(annList,function(x) x$annMoleculeNumber>0)]
          annList<-annList[order(sapply(annList,function(x) x[[order]]),decreasing=decreasing)]   
 	  }	  
       return(annList)
@@ -219,7 +218,7 @@ printTopo<-function(ann,detail=FALSE){
 	  if(detail==FALSE){
 	  pathwayId<-sapply(ann,function(x) x$pathwayId)
       pathwayName<-sapply(ann,function(x) x$pathwayName)
-      annComponentRatio<-sapply(ann,function(x) paste(x$annComponentNumber,x$componentNumber,sep="/"))
+      annMoleculeRatio<-sapply(ann,function(x) paste(x$annMoleculeNumber,x$moleculeNumber,sep="/"))
       annBgRatio<-sapply(ann,function(x) paste(x$annBgNumber,x$bgNumber,sep="/"))
       propertyName<-sapply(ann,function(x) x$propertyName) 
       propertyValue<-sapply(ann,function(x) x$propertyValue) 	 
@@ -227,20 +226,20 @@ printTopo<-function(ann,detail=FALSE){
       pvalue<-sapply(ann,function(x) x$pvalue)
       #qvalue<-sapply(ann,function(x) x$qvalue)
 	  fdr<-sapply(ann,function(x) x$fdr)
-      #ann.data.frame<-as.data.frame(cbind(pathwayId,pathwayName,annComponentRatio,
+      #ann.data.frame<-as.data.frame(cbind(pathwayId,pathwayName,annMoleculeRatio,
       #                       annBgRatio,pvalue,qvalue,lfdr))
-      ann.data.frame<-data.frame(pathwayId=pathwayId,pathwayName=pathwayName,annComponentRatio=annComponentRatio,
+      ann.data.frame<-data.frame(pathwayId=pathwayId,pathwayName=pathwayName,annMoleculeRatio=annMoleculeRatio,
 	  annBgRatio=annBgRatio,propertyName=propertyName,propertyValue=propertyValue,bgPropertyValue=bgPropertyValue,
 	  pvalue=pvalue,fdr=fdr,stringsAsFactors=FALSE)							 
 	  }
 	  else{	 
       pathwayId<-sapply(ann,function(x) x$pathwayId)	  
 	  pathwayName<-sapply(ann,function(x) x$pathwayName)
-	  annComponentList<-sapply(ann, function(x){ paste(x$annComponentList,collapse=";") })
-      annBgComponentList<-sapply(ann, function(x){ paste(x$annBgComponentList,collapse=";")})
-	  annComponentPropertyValueList<-sapply(ann, function(x){ paste(x$annComponentPropertyValueList,collapse=";") })
-      annBgComponentPropertyValueList<-sapply(ann, function(x){ paste(x$annBgComponentPropertyValueList,collapse=";")})	  
-	  annComponentRatio<-sapply(ann,function(x) paste(x$annComponentNumber,x$componentNumber,sep="/"))
+	  annMoleculeList<-sapply(ann, function(x){ paste(x$annMoleculeList,collapse=";") })
+      annBgMoleculeList<-sapply(ann, function(x){ paste(x$annBgMoleculeList,collapse=";")})
+	  annMoleculePropertyValueList<-sapply(ann, function(x){ paste(x$annMoleculePropertyValueList,collapse=";") })
+      annBgMoleculePropertyValueList<-sapply(ann, function(x){ paste(x$annBgMoleculePropertyValueList,collapse=";")})	  
+	  annMoleculeRatio<-sapply(ann,function(x) paste(x$annMoleculeNumber,x$moleculeNumber,sep="/"))
       annBgRatio<-sapply(ann,function(x) paste(x$annBgNumber,x$bgNumber,sep="/"))
       propertyName<-sapply(ann,function(x) x$propertyName) 
       propertyValue<-sapply(ann,function(x) x$propertyValue) 
@@ -248,12 +247,12 @@ printTopo<-function(ann,detail=FALSE){
       pvalue<-sapply(ann,function(x) x$pvalue)
       #qvalue<-sapply(ann,function(x) x$qvalue)
 	  fdr<-sapply(ann,function(x) x$fdr)
-      #ann.data.frame<-as.data.frame(cbind(pathwayId,pathwayName,annComponentRatio,
-      #                       annBgRatio,pvalue,qvalue,lfdr,annComponentList,annBgComponentList))
-      ann.data.frame<-data.frame(pathwayId=pathwayId,pathwayName=pathwayName,annComponentRatio=annComponentRatio,
+      #ann.data.frame<-as.data.frame(cbind(pathwayId,pathwayName,annMoleculeRatio,
+      #                       annBgRatio,pvalue,qvalue,lfdr,annMoleculeList,annBgMoleculeList))
+      ann.data.frame<-data.frame(pathwayId=pathwayId,pathwayName=pathwayName,annMoleculeRatio=annMoleculeRatio,
 	  annBgRatio=annBgRatio,propertyName=propertyName,propertyValue=propertyValue,bgPropertyValue=bgPropertyValue,pvalue=pvalue,
-	  fdr=fdr,annComponentList=annComponentList,
-	  annBgComponentList=annBgComponentList,annComponentPropertyValueList,annBgComponentPropertyValueList,stringsAsFactors=FALSE)								 
+	  fdr=fdr,annMoleculeList=annMoleculeList,
+	  annBgMoleculeList=annBgMoleculeList,annMoleculePropertyValueList,annBgMoleculePropertyValueList,stringsAsFactors=FALSE)								 
 	  }	  
       return(ann.data.frame)
 }

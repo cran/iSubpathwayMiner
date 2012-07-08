@@ -14,7 +14,7 @@
 Compared with result of \code{\link{getBackground}}, size of the background for getPrioBackground is usually small. The analysis method of pathways that use the background will be more conservative. For human, reference background of compounds is union of all metabolites from HMDB and KEGG human pathways. However, \code{\link{getBackground}} use all compounds in KEGG as background.
 }
 \value{
-   A character vector of background components.
+   A character vector of background molecules.
 }
 \author{ Chunquan Li \email{lcqbio@yahoo.com.cn}}
 \seealso{\code{\link{identifyGraph}},\code{\link{getBackground}}}
@@ -28,7 +28,7 @@ backgroundGene<-getPrioBackground(type="gene")
 backgroundCompound<-getPrioBackground(type="compound")
 
 ##get all background compounds and genes
-backgroundComponent<-getPrioBackground(type="gene_compound")
+backgroundMolecule<-getPrioBackground(type="gene_compound")
 
 }
 }

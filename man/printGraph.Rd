@@ -13,7 +13,7 @@
                          are converted into strings, which are used to display and write results with genes. }
 }
 \value{
-A data.frame of the annotation results. Columns include pathwayId, pathwayName, annComponentRatio, annBgRatio, pvalue, 'fdr', annComponentList, annBgComponentList. The \code{annComponentRatio} is the ratio of the annotated components. For example, 30/1000 means that 30 components in 1000 components are annotated. The annComponentList and annBgComponentList are the annotated components and the annotated background components. Detailed information is provided in the function \code{\link{identifyGraph}}.
+A data.frame of the annotation results. Columns include pathwayId, pathwayName, annMoleculeRatio, annBgRatio, pvalue, 'fdr', annMoleculeList, annBgMoleculeList. The \code{annMoleculeRatio} is the ratio of the annotated molecules. For example, 30/1000 means that 30 molecules in 1000 molecules are annotated. The annMoleculeList and annBgMoleculeList are the annotated molecules and the annotated background molecules. Detailed information is provided in the function \code{\link{identifyGraph}}.
 }
 \author{ Chunquan Li \email{lcqbio@yahoo.com.cn}}
 \seealso{\code{\link{identifyGraph}},\code{\link{plotAnnGraph}}}

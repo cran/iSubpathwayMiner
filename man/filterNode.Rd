@@ -14,7 +14,7 @@
 
 }
 \details{
-The function is used to filter "not interesting" nodes. For example, it may be necessary to ignore nodes with type="map" when focusing on components such as compounds and gene products. Moreover, it may be necessary to ignore nodes with type="map" and "compound" when only focusing on gene products. 
+The function is used to filter "not interesting" nodes. For example, it may be necessary to ignore nodes with type="map" when focusing on molecules such as compounds and gene products. Moreover, it may be necessary to ignore nodes with type="map" and "compound" when only focusing on gene products. 
 
 The function will delete nodes according to the argument \code{nodeType} and thus related edges are also deleted. The function firstly find nodes that meet the argument \code{nodeType}. Secondly, these nodes are deleted by using the function \code{\link{delete.vertices}}. Finally, we will get subgraphs of all graphs that meet conditions. 
 
@@ -43,10 +43,8 @@ g2<-filterNode(g,nodeType=c("compound","map"))
 V(g2[[1]])$type
 
 ##Convert metabolic pathways to graphs.
-#path<-paste(system.file(package="iSubpathwayMiner"),"/localdata/kgml/metabolic/ec/",sep="")
-#p1<-getPathway(path,c("ec00010.xml","ec00020.xml"))
-path<-paste(system.file(package="iSubpathwayMiner"),"/localdata/kgml/metabolic/hsa/",sep="")
-p1<-getPathway(path,c("hsa00010.xml","hsa00020.xml"))
+path<-paste(system.file(package="iSubpathwayMiner"),"/localdata/kgml/metabolic/ec/",sep="")
+p1<-getPathway(path,c("ec00010.xml","ec00020.xml"))
 g3<-getMetabolicGraph(p1)
 #type of each node before nodes are filtered
 V(g3[[1]])$type

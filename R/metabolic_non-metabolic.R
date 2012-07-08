@@ -14,45 +14,46 @@ expandNode<-function(graphList,nodeType=c("ortholog","enzyme","gene","compound",
        Vcount<-vcount(graphList[[i]])
        if(Vcount>0){
          for(j in 1:Vcount){
-		  if(get.vertex.attribute(graphList[[i]],"type",j-1) %in% nodeType){
-           vlist<-strsplit(get.vertex.attribute(graphList[[i]],"names",j-1)," ")
+		 #all new!
+		  if(get.vertex.attribute(graphList[[i]],"type",j) %in% nodeType){
+           vlist<-strsplit(get.vertex.attribute(graphList[[i]],"names",j)," ")
            for(k in 1:length(vlist[[1]])){		   
-                name<-c(name,paste(get.vertex.attribute(graphList[[i]],"name",j-1),"_",k,sep=""))
-                id<-c(id,paste(get.vertex.attribute(graphList[[i]],"id",j-1),"_",k,sep=""))
+                name<-c(name,paste(get.vertex.attribute(graphList[[i]],"name",j),"_",k,sep=""))
+                id<-c(id,paste(get.vertex.attribute(graphList[[i]],"id",j),"_",k,sep=""))
                 names<-c(names,vlist[[1]][k])
-                type<-c(type,get.vertex.attribute(graphList[[i]],"type",j-1))
-                reaction<-c(reaction,get.vertex.attribute(graphList[[i]],"reaction",j-1))
+                type<-c(type,get.vertex.attribute(graphList[[i]],"type",j))
+                reaction<-c(reaction,get.vertex.attribute(graphList[[i]],"reaction",j))
 				newlink<-paste("http://www.kegg.jp/dbget-bin/www_bget?",vlist[[1]][k],sep="")
 				link<-c(link,newlink)
-                #link<-c(link,get.vertex.attribute(graphList[[i]],"link",j-1))
+                #link<-c(link,get.vertex.attribute(graphList[[i]],"link",j))
 				graphics_name<-c(graphics_name,vlist[[1]][k])
-                #graphics_name<-c(graphics_name,get.vertex.attribute(graphList[[i]],"graphics_name",j-1))
-                graphics_fgcolor<-c(graphics_fgcolor,get.vertex.attribute(graphList[[i]],"graphics_fgcolor",j-1))
-                graphics_bgcolor<-c(graphics_bgcolor,get.vertex.attribute(graphList[[i]],"graphics_bgcolor",j-1))
-                graphics_type<-c(graphics_type,get.vertex.attribute(graphList[[i]],"graphics_type",j-1))
-                graphics_x<-c(graphics_x,get.vertex.attribute(graphList[[i]],"graphics_x",j-1))
-                graphics_y<-c(graphics_y,get.vertex.attribute(graphList[[i]],"graphics_y",j-1))
-                graphics_width<-c(graphics_width,get.vertex.attribute(graphList[[i]],"graphics_width",j-1))
-                graphics_height<-c(graphics_height,get.vertex.attribute(graphList[[i]],"graphics_height",j-1))
-                graphics_coords<-c(graphics_coords,get.vertex.attribute(graphList[[i]],"graphics_coords",j-1))
+                #graphics_name<-c(graphics_name,get.vertex.attribute(graphList[[i]],"graphics_name",j))
+                graphics_fgcolor<-c(graphics_fgcolor,get.vertex.attribute(graphList[[i]],"graphics_fgcolor",j))
+                graphics_bgcolor<-c(graphics_bgcolor,get.vertex.attribute(graphList[[i]],"graphics_bgcolor",j))
+                graphics_type<-c(graphics_type,get.vertex.attribute(graphList[[i]],"graphics_type",j))
+                graphics_x<-c(graphics_x,get.vertex.attribute(graphList[[i]],"graphics_x",j))
+                graphics_y<-c(graphics_y,get.vertex.attribute(graphList[[i]],"graphics_y",j))
+                graphics_width<-c(graphics_width,get.vertex.attribute(graphList[[i]],"graphics_width",j))
+                graphics_height<-c(graphics_height,get.vertex.attribute(graphList[[i]],"graphics_height",j))
+                graphics_coords<-c(graphics_coords,get.vertex.attribute(graphList[[i]],"graphics_coords",j))
            }
           }
 		  else{
-                name<-c(name,get.vertex.attribute(graphList[[i]],"name",j-1))
-                id<-c(id,get.vertex.attribute(graphList[[i]],"id",j-1))
-                names<-c(names,get.vertex.attribute(graphList[[i]],"names",j-1))
-                type<-c(type,get.vertex.attribute(graphList[[i]],"type",j-1))
-                reaction<-c(reaction,get.vertex.attribute(graphList[[i]],"reaction",j-1))
-                link<-c(link,get.vertex.attribute(graphList[[i]],"link",j-1))
-                graphics_name<-c(graphics_name,get.vertex.attribute(graphList[[i]],"graphics_name",j-1))
-                graphics_fgcolor<-c(graphics_fgcolor,get.vertex.attribute(graphList[[i]],"graphics_fgcolor",j-1))
-                graphics_bgcolor<-c(graphics_bgcolor,get.vertex.attribute(graphList[[i]],"graphics_bgcolor",j-1))
-                graphics_type<-c(graphics_type,get.vertex.attribute(graphList[[i]],"graphics_type",j-1))
-                graphics_x<-c(graphics_x,get.vertex.attribute(graphList[[i]],"graphics_x",j-1))
-                graphics_y<-c(graphics_y,get.vertex.attribute(graphList[[i]],"graphics_y",j-1))
-                graphics_width<-c(graphics_width,get.vertex.attribute(graphList[[i]],"graphics_width",j-1))
-                graphics_height<-c(graphics_height,get.vertex.attribute(graphList[[i]],"graphics_height",j-1))
-                graphics_coords<-c(graphics_coords,get.vertex.attribute(graphList[[i]],"graphics_coords",j-1))		  
+                name<-c(name,get.vertex.attribute(graphList[[i]],"name",j))
+                id<-c(id,get.vertex.attribute(graphList[[i]],"id",j))
+                names<-c(names,get.vertex.attribute(graphList[[i]],"names",j))
+                type<-c(type,get.vertex.attribute(graphList[[i]],"type",j))
+                reaction<-c(reaction,get.vertex.attribute(graphList[[i]],"reaction",j))
+                link<-c(link,get.vertex.attribute(graphList[[i]],"link",j))
+                graphics_name<-c(graphics_name,get.vertex.attribute(graphList[[i]],"graphics_name",j))
+                graphics_fgcolor<-c(graphics_fgcolor,get.vertex.attribute(graphList[[i]],"graphics_fgcolor",j))
+                graphics_bgcolor<-c(graphics_bgcolor,get.vertex.attribute(graphList[[i]],"graphics_bgcolor",j))
+                graphics_type<-c(graphics_type,get.vertex.attribute(graphList[[i]],"graphics_type",j))
+                graphics_x<-c(graphics_x,get.vertex.attribute(graphList[[i]],"graphics_x",j))
+                graphics_y<-c(graphics_y,get.vertex.attribute(graphList[[i]],"graphics_y",j))
+                graphics_width<-c(graphics_width,get.vertex.attribute(graphList[[i]],"graphics_width",j))
+                graphics_height<-c(graphics_height,get.vertex.attribute(graphList[[i]],"graphics_height",j))
+                graphics_coords<-c(graphics_coords,get.vertex.attribute(graphList[[i]],"graphics_coords",j))		  
 		  }
          }		 
        }
@@ -68,7 +69,7 @@ expandNode<-function(graphList,nodeType=c("ortholog","enzyme","gene","compound",
          }
          for(j in 1:Ecount){
 
-           e<-get.edge(graphList[[i]],j-1)
+           e<-get.edge(graphList[[i]],j)
 
            l_1<-strsplit(get.vertex.attribute(graphList[[i]],"names",e[1])," ")
            l1<-length(l_1[[1]])
@@ -100,7 +101,7 @@ expandNode<-function(graphList,nodeType=c("ortholog","enzyme","gene","compound",
       
            if(edgesAttrLenngth>0){
                for(k in 1:edgesAttrLenngth){
-                  str[[k]]<-c(str[[k]],rep(get.edge.attribute(graphList[[i]],edgesAttr[k],j-1),l1*l2))
+                  str[[k]]<-c(str[[k]],rep(get.edge.attribute(graphList[[i]],edgesAttr[k],j),l1*l2))
                }
            }
         }
@@ -155,8 +156,9 @@ filterNode<-function(graphList,nodeType=c("map")){
            deleteId<-c()
 		   if(vCount>0){
            for(j in 1:vCount){
-               if(get.vertex.attribute(graphList[[i]],"type",j-1) %in% nodeType){
-                   deleteId<-c(deleteId,j-1)
+               #if(get.vertex.attribute(graphList[[i]],"type",j-1) %in% nodeType){
+			   if(get.vertex.attribute(graphList[[i]],"type",j) %in% nodeType){
+                   deleteId<-c(deleteId,j)
                }
            }
            graphList[[i]]<-delete.vertices(graphList[[i]],deleteId)		   
@@ -180,14 +182,19 @@ mergeNode<-function(graphList,simpleGraph=TRUE){
 	   middle<-list();mid<-c()
        if(Vcount>0){
          for(j in 1:Vcount){
-           temp_name<-get.vertex.attribute(graphList[[i]],"names",j-1)
+           #temp_name<-get.vertex.attribute(graphList[[i]],"names",j-1)
+		   #new!
+           temp_name<-get.vertex.attribute(graphList[[i]],"names",j)		   
 		   matched_name_index<-match(temp_name,mid)
            if(is.na(matched_name_index)){
                 mid<-c(mid,temp_name)				
-                middle[[length(mid)]]<-j-1
+                #middle[[length(mid)]]<-j-1
+				middle[[length(mid)]]<-j
            }
 		   else{
- 		        middle[[matched_name_index]]<-c(middle[[matched_name_index]],j-1)
+ 		        #middle[[matched_name_index]]<-c(middle[[matched_name_index]],j-1)
+				
+				middle[[matched_name_index]]<-c(middle[[matched_name_index]],j)
 		   }
          }		 
        }
@@ -236,13 +243,15 @@ mergeNode<-function(graphList,simpleGraph=TRUE){
          }
          for(j in 1:Ecount){
            ####  e中存放的是第j条边的顶点id
-           e<-get.edge(graphList[[i]],j-1)
+           #e<-get.edge(graphList[[i]],j-1)
+           e<-get.edge(graphList[[i]],j)		   
            entry1<-c(entry1,get.vertex.attribute(graphList[[i]],"names",e[1]))
            entry2<-c(entry2,get.vertex.attribute(graphList[[i]],"names",e[2]))
 	
            if(edgesAttrLenngth>0){
                for(k in 1:edgesAttrLenngth){
-                  str[[k]]<-c(str[[k]],get.edge.attribute(graphList[[i]],edgesAttr[k],j-1))
+                  #str[[k]]<-c(str[[k]],get.edge.attribute(graphList[[i]],edgesAttr[k],j-1))
+                  str[[k]]<-c(str[[k]],get.edge.attribute(graphList[[i]],edgesAttr[k],j))				  
                }
            }
         }
@@ -299,8 +308,9 @@ getSimpleGraph<-function(graphList){
          eCount<-ecount(pathwayList[[i]]) 
          if(eCount>0){
 		 if(any(is.loop(pathwayList[[i]]))||any(is.multiple(pathwayList[[i]]))){
-		   index<-seq(0,eCount-1)
-
+		   #index<-seq(0,eCount-1)
+		   #new!
+            index<-seq(1,eCount)
 		   deleteEdges<-c(deleteEdges,index[is.loop(pathwayList[[i]])])
 
 		   EMultiple<-index[count.multiple(pathwayList[[i]])>1]
@@ -387,8 +397,10 @@ mapNode<-function(graphList){
 		 Vcount<-vcount(graphList[[i]])
 		 if(Vcount>0){
 		 for(j in 1:Vcount){
-		     if(get.vertex.attribute(graphList[[i]],"type",j-1)==nodeType){
-		         node_name<-get.vertex.attribute(graphList[[i]],"names",j-1)
+		     #if(get.vertex.attribute(graphList[[i]],"type",j-1)==nodeType){
+		     if(get.vertex.attribute(graphList[[i]],"type",j)==nodeType){			 
+		         #node_name<-get.vertex.attribute(graphList[[i]],"names",j-1)
+		         node_name<-get.vertex.attribute(graphList[[i]],"names",j)				 
 		         expand_node_names<-unlist(strsplit(node_name,"[ ;]"))
 				 if(org=="ko"){
 	                 genes<-getGeneFromKO(expand_node_names)
@@ -411,19 +423,27 @@ mapNode<-function(graphList){
                      graphics_fgcolor<-c(graphics_fgcolor,"#000000")
                      graphics_bgcolor<-c(graphics_bgcolor,"#BFFFBF")
                 }else{
-                     names<-c(names,get.vertex.attribute(graphList[[i]],"names",j-1))
-                     type<-c(type,get.vertex.attribute(graphList[[i]],"type",j-1))
-                     link<-c(link,get.vertex.attribute(graphList[[i]],"link",j-1))
-                     graphics_name<-c(graphics_name,get.vertex.attribute(graphList[[i]],"graphics_name",j-1))
+                     #names<-c(names,get.vertex.attribute(graphList[[i]],"names",j-1))
+                     #type<-c(type,get.vertex.attribute(graphList[[i]],"type",j-1))
+                     #link<-c(link,get.vertex.attribute(graphList[[i]],"link",j-1))
+                     #graphics_name<-c(graphics_name,get.vertex.attribute(graphList[[i]],"graphics_name",j-1))
+                     names<-c(names,get.vertex.attribute(graphList[[i]],"names",j))
+                     type<-c(type,get.vertex.attribute(graphList[[i]],"type",j))
+                     link<-c(link,get.vertex.attribute(graphList[[i]],"link",j))
+                     graphics_name<-c(graphics_name,get.vertex.attribute(graphList[[i]],"graphics_name",j))					 
                      graphics_fgcolor<-c(graphics_fgcolor,"#000000")
                      graphics_bgcolor<-c(graphics_bgcolor,"#FFFFFF")
                 }				
 				 
 			}else{
-                 names<-c(names,get.vertex.attribute(graphList[[i]],"names",j-1))
-                 type<-c(type,get.vertex.attribute(graphList[[i]],"type",j-1))
-                 link<-c(link,get.vertex.attribute(graphList[[i]],"link",j-1))
-                 graphics_name<-c(graphics_name,get.vertex.attribute(graphList[[i]],"graphics_name",j-1))
+                 #names<-c(names,get.vertex.attribute(graphList[[i]],"names",j-1))
+                 #type<-c(type,get.vertex.attribute(graphList[[i]],"type",j-1))
+                 #link<-c(link,get.vertex.attribute(graphList[[i]],"link",j-1))
+                 #graphics_name<-c(graphics_name,get.vertex.attribute(graphList[[i]],"graphics_name",j-1))
+                names<-c(names,get.vertex.attribute(graphList[[i]],"names",j))
+                 type<-c(type,get.vertex.attribute(graphList[[i]],"type",j))
+                 link<-c(link,get.vertex.attribute(graphList[[i]],"link",j))
+                 graphics_name<-c(graphics_name,get.vertex.attribute(graphList[[i]],"graphics_name",j))				 
                  graphics_fgcolor<-c(graphics_fgcolor,"#000000")
                  graphics_bgcolor<-c(graphics_bgcolor,"#FFFFFF")
 			}			
@@ -483,6 +503,7 @@ simplifyGraph<-function(graphList,nodeType="geneProduct",directEdge=TRUE,verbose
 		     temp_nodeType<-"compound"
 		 }
          vCount<-vcount(pathwayList[[i]])-1
+		 #vCount<-vcount(pathwayList[[i]])
          enzyme_index<-c()#
 
          ID<-c();id<-c();names<-c();type<-c();reaction<-c();link<-c()
@@ -491,25 +512,26 @@ simplifyGraph<-function(graphList,nodeType="geneProduct",directEdge=TRUE,verbose
          graphics_width<-c();graphics_height<-c();graphics_coords<-c()
         if(vCount>0){
         for(j in 0:vCount){
-            if(get.vertex.attribute(pathwayList[[i]],"type",j)==temp_nodeType){
-                 enzyme_index<-c(enzyme_index,j)
-                 id<-c(id,get.vertex.attribute(pathwayList[[i]],"id",j))
-                 names<-c(names,get.vertex.attribute(pathwayList[[i]],"names",j))
-                 type<-c(type,get.vertex.attribute(pathwayList[[i]],"type",j))
-                 reaction<-c(reaction,get.vertex.attribute(pathwayList[[i]],"reaction",j))
-                 link<-c(link,get.vertex.attribute(pathwayList[[i]],"link",j))
-                 graphics_name<-c(graphics_name,get.vertex.attribute(pathwayList[[i]],"graphics_name",j))
-                 graphics_fgcolor<-c(graphics_fgcolor,get.vertex.attribute(pathwayList[[i]],"graphics_fgcolor",j)) 
-                 graphics_bgcolor<-c(graphics_bgcolor,get.vertex.attribute(pathwayList[[i]],"graphics_bgcolor",j))
-                 graphics_type<-c(graphics_type,get.vertex.attribute(pathwayList[[i]],"graphics_type",j))
-                 graphics_x<-c(graphics_x,get.vertex.attribute(pathwayList[[i]],"graphics_x",j))
-                 graphics_y<-c(graphics_y,get.vertex.attribute(pathwayList[[i]],"graphics_y",j)) 
-                 graphics_width<-c(graphics_width,get.vertex.attribute(pathwayList[[i]],"graphics_width",j)) 
-                 graphics_height<-c(graphics_height,get.vertex.attribute(pathwayList[[i]],"graphics_height",j)) 
-                 graphics_coords<-c(graphics_coords,get.vertex.attribute(pathwayList[[i]],"graphics_coords",j)) 
+        #for(j in 1:vCount){		
+            if(get.vertex.attribute(pathwayList[[i]],"type",j+1)==temp_nodeType){
+                 enzyme_index<-c(enzyme_index,j+1)
+                 id<-c(id,get.vertex.attribute(pathwayList[[i]],"id",j+1))
+                 names<-c(names,get.vertex.attribute(pathwayList[[i]],"names",j+1))
+                 type<-c(type,get.vertex.attribute(pathwayList[[i]],"type",j+1+1))
+                 reaction<-c(reaction,get.vertex.attribute(pathwayList[[i]],"reaction",j+1))
+                 link<-c(link,get.vertex.attribute(pathwayList[[i]],"link",j+1))
+                 graphics_name<-c(graphics_name,get.vertex.attribute(pathwayList[[i]],"graphics_name",j+1))
+                 graphics_fgcolor<-c(graphics_fgcolor,get.vertex.attribute(pathwayList[[i]],"graphics_fgcolor",j+1)) 
+                 graphics_bgcolor<-c(graphics_bgcolor,get.vertex.attribute(pathwayList[[i]],"graphics_bgcolor",j+1))
+                 graphics_type<-c(graphics_type,get.vertex.attribute(pathwayList[[i]],"graphics_type",j+1))
+                 graphics_x<-c(graphics_x,get.vertex.attribute(pathwayList[[i]],"graphics_x",j+1))
+                 graphics_y<-c(graphics_y,get.vertex.attribute(pathwayList[[i]],"graphics_y",j+1)) 
+                 graphics_width<-c(graphics_width,get.vertex.attribute(pathwayList[[i]],"graphics_width",j+1)) 
+                 graphics_height<-c(graphics_height,get.vertex.attribute(pathwayList[[i]],"graphics_height",j+1)) 
+                 graphics_coords<-c(graphics_coords,get.vertex.attribute(pathwayList[[i]],"graphics_coords",j+1)) 
             }
           ID<-id
-        }##for(j in 0:vCount)
+        }##for(j in 1:vCount)
         }
         ###
         start<-c();terminate<-c();middle<-list()
@@ -600,7 +622,8 @@ simplifyGraph<-function(graphList,nodeType="geneProduct",directEdge=TRUE,verbose
                 middleJLength<-length(middle[[j]])
                 if(middleJLength>1){
                      for(k in 2:middleJLength){
-			             if(middle[[j]][1]!=-1){			   
+			             if(middle[[j]][k]!=-1){#20120709revised,
+               #print(paste(middle[[j]][k],"ddd"))						 
                Eid[j]<-paste(Eid[j],";",get.vertex.attribute(pathwayList[[i]],"id",middle[[j]][k]),sep="")
                Enames[j]<-paste(Enames[j],";",get.vertex.attribute(pathwayList[[i]],"names",middle[[j]][k]),sep="")
                Etype[j]<-paste(Etype[j],";",get.vertex.attribute(pathwayList[[i]],"type",middle[[j]][k]),sep="")
